@@ -6,7 +6,7 @@
  * Copie a URL /exec gerada e cole na variável API das páginas HTML.
  */
 var SS = SpreadsheetApp.getActive();
-var PROD = ['id','nome','categoria','descricao','descricao_completa','preco','estoque','etiqueta','ativo','imagem','cores','tamanhos'];
+var PROD = ['id','nome','categoria','descricao','descricao_completa','preco','estoque','etiqueta','ativo','imagem','cores','tamanhos','variacoes'];
 var MAX_TENT = 5, BLOQUEIO_S = 900, SESSAO_S = 21600;
 
 function out(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
@@ -26,9 +26,16 @@ function cfg() {
   return c;
 }
 function prod(p) {
+  var vars = [];
+  if (p.variacoes) {
+    try {
+      vars = typeof p.variacoes === 'string' ? JSON.parse(p.variacoes) : p.variacoes;
+      if (!Array.isArray(vars)) vars = [];
+    } catch (e) { vars = []; }
+  }
   return { id: String(p.id), nome: p.nome, categoria: p.categoria, descricao: p.descricao, descricao_completa: p.descricao_completa,
     preco: Number(p.preco) || 0, estoque: parseInt(p.estoque, 10) || 0, etiqueta: p.etiqueta, ativo: bool(p.ativo),
-    imagem: p.imagem, cores: p.cores, tamanhos: p.tamanhos };
+    imagem: p.imagem, cores: p.cores, tamanhos: p.tamanhos, variacoes: vars };
 }
 function produtos() { return rd('Produtos').filter(function (p) { return p.id && p.nome; }).map(prod); }
 function categorias() {
@@ -170,12 +177,53 @@ function salvarProduto(d) {
   var img = String(p.imagem || ''); if (img && !/^https:\/\//.test(img)) return { ok: 0, erro: 'Imagem inválida.' };
   var id = p.id || 'p' + Date.now().toString(36);
   var ex = rd('Produtos').filter(function (r) { return String(r.id) === id; })[0];
-  // Se a foto anterior for substituída por uma nova, apaga a anterior do Drive
-  if (ex && ex.imagem && img && ex.imagem !== img) {
-    excluirArquivoDrive(ex.imagem);
+
+  // Trata variações (múltiplas imagens com preço e estoque)
+  var varsJson = '';
+  var novasImagens = [];
+  if (img) novasImagens.push(img);
+  if (p.variacoes) {
+    var listaV = typeof p.variacoes === 'string' ? JSON.parse(p.variacoes) : p.variacoes;
+    if (Array.isArray(listaV) && listaV.length > 0) {
+      varsJson = JSON.stringify(listaV);
+      listaV.forEach(function (v) {
+        if (v && v.imagem) novasImagens.push(v.imagem);
+      });
+      if (!img && listaV[0].imagem) img = listaV[0].imagem;
+    }
   }
+
+  // Se fotos anteriores foram removidas, apaga do Google Drive para economizar espaço
+  if (ex) {
+    var fotosAntigas = [];
+    if (ex.imagem) fotosAntigas.push(ex.imagem);
+    if (ex.variacoes) {
+      try {
+        var vAnt = typeof ex.variacoes === 'string' ? JSON.parse(ex.variacoes) : ex.variacoes;
+        if (Array.isArray(vAnt)) {
+          vAnt.forEach(function (v) { if (v && v.imagem) fotosAntigas.push(v.imagem); });
+        }
+      } catch (e) {}
+    }
+    fotosAntigas.forEach(function (f) {
+      if (novasImagens.indexOf(f) === -1) {
+        excluirArquivoDrive(f);
+      }
+    });
+  }
+
+  // Garante cabeçalho com a coluna 'variacoes'
+  var h = s.getRange(1, 1, 1, Math.max(s.getLastColumn(), PROD.length)).getValues()[0];
+  var alterouCabecalho = false;
+  for (var ci = 0; ci < PROD.length; ci++) {
+    if (h[ci] !== PROD[ci]) { alterouCabecalho = true; break; }
+  }
+  if (alterouCabecalho) {
+    s.getRange(1, 1, 1, PROD.length).setValues([PROD]);
+  }
+
   var linha = ex ? ex._row : linhaLivre(s);
-  var vals = [id, nome, p.categoria, p.descricao, p.descricao_completa, preco, est, p.etiqueta, !!p.ativo, img, p.cores, p.tamanhos]
+  var vals = [id, nome, p.categoria, p.descricao, p.descricao_completa, preco, est, p.etiqueta, !!p.ativo, img, p.cores, p.tamanhos, varsJson]
     .map(function (v) { return safe(typeof v === 'string' ? v.trim() : v); });
   s.getRange(linha, 1, 1, PROD.length).setValues([vals]);
   limparCache();
@@ -184,9 +232,17 @@ function salvarProduto(d) {
 function excluirProduto(d) {
   var r = rd('Produtos').filter(function (x) { return String(x.id) === d.id; })[0];
   if (!r) return { ok: 0, erro: 'Produto não encontrado.' };
-  // Apaga a foto do produto no Google Drive para economizar espaço
+  // Apaga todas as fotos do produto no Google Drive para economizar espaço
   if (r.imagem) {
     excluirArquivoDrive(r.imagem);
+  }
+  if (r.variacoes) {
+    try {
+      var vars = typeof r.variacoes === 'string' ? JSON.parse(r.variacoes) : r.variacoes;
+      if (Array.isArray(vars)) {
+        vars.forEach(function (v) { if (v && v.imagem) excluirArquivoDrive(v.imagem); });
+      }
+    } catch (e) {}
   }
   SS.getSheetByName('Produtos').getRange(r._row, 1, 1, PROD.length).clearContent();
   limparCache();
@@ -514,7 +570,27 @@ function pedido(d) {
   // Dá baixa no estoque
   ids.forEach(function (id) {
     var p = ps.filter(function (r) { return String(r.id) === id; })[0];
-    sProd.getRange(p._row, 7).setValue((parseInt(p.estoque, 10) || 0) - mapa[id]);
+    var novoEst = Math.max(0, (parseInt(p.estoque, 10) || 0) - mapa[id]);
+    sProd.getRange(p._row, 7).setValue(novoEst);
+    if (p.variacoes) {
+      try {
+        var vars = typeof p.variacoes === 'string' ? JSON.parse(p.variacoes) : p.variacoes;
+        if (Array.isArray(vars)) {
+          var mudouVars = false;
+          itens.filter(function (it) { return it.id === id && (it.varId || it.varNome); }).forEach(function (it) {
+            vars.forEach(function (v) {
+              if ((it.varId && v.id === it.varId) || (it.varNome && v.nome === it.varNome)) {
+                v.estoque = Math.max(0, (parseInt(v.estoque, 10) || 0) - (parseInt(it.q, 10) || 0));
+                mudouVars = true;
+              }
+            });
+          });
+          if (mudouVars) {
+            sProd.getRange(p._row, 13).setValue(JSON.stringify(vars));
+          }
+        }
+      } catch (x) {}
+    }
   });
 
   // Monta resumo dos itens e valor total
@@ -522,11 +598,12 @@ function pedido(d) {
   var totalCalculado = 0;
   itens.forEach(function (it) {
     var p = ps.filter(function (r) { return String(r.id) === it.id; })[0];
-    var precoUnit = p ? (Number(p.preco) || 0) : (Number(it.preco) || 0);
+    var precoUnit = Number(it.preco);
+    if (!precoUnit || isNaN(precoUnit)) precoUnit = p ? (Number(p.preco) || 0) : 0;
     var qtd = parseInt(it.q, 10) || 1;
     var sub = qtd * precoUnit;
     totalCalculado += sub;
-    var det = [it.cor, it.tam].filter(Boolean).join('/');
+    var det = [it.varNome ? 'Opção: ' + it.varNome : '', it.cor, it.tam].filter(Boolean).join('/');
     var nomeProd = p ? p.nome : (it.nome || it.id);
     resumoItens.push(qtd + 'x ' + nomeProd + (det ? ' (' + det + ')' : '') + ' [R$ ' + sub.toFixed(2) + ']');
   });

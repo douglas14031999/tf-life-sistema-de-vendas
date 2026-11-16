@@ -417,6 +417,260 @@
       flex: none
     }
 
+    /* Modal com cabecalho e rodape fixos */
+    .md.modal-fixed {
+      padding: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      width: min(680px, 100%);
+      max-height: 90vh;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+    }
+
+    .md.modal-fixed .md-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 24px 14px;
+      border-bottom: 1px solid var(--bd);
+      flex-shrink: 0;
+      background: var(--bg);
+    }
+
+    .md.modal-fixed .md-head h2 {
+      font-size: 22px;
+      margin: 0;
+      font-family: 'Playfair Display', Georgia, serif;
+      color: var(--g);
+    }
+    @media (prefers-color-scheme: dark) {
+      .md.modal-fixed .md-head h2 {
+        color: var(--l);
+      }
+    }
+
+    .md.modal-fixed .md-close {
+      background: transparent;
+      border: 0;
+      font-size: 28px;
+      line-height: 1;
+      color: var(--mu);
+      cursor: pointer;
+      padding: 2px 8px;
+      border-radius: 8px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .md.modal-fixed .md-close:hover {
+      color: var(--fg);
+      background: var(--bd);
+    }
+
+    .md.modal-fixed .md-body {
+      padding: 20px 24px;
+      overflow-y: auto;
+      flex: 1;
+      min-height: 0;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .md.modal-fixed .md-foot {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 14px 24px;
+      border-top: 1px solid var(--bd);
+      background: var(--bg);
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+
+    /* Estilos das variacoes e fotos */
+    .vars-section {
+      background: var(--card);
+      border: 1px solid var(--bd);
+      border-radius: 16px;
+      padding: 16px;
+      margin-top: 6px;
+    }
+
+    .vars-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .vars-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--fg);
+      margin: 0;
+    }
+
+    .btn-sm {
+      padding: 6px 14px;
+      font-size: 13px;
+      border-radius: 99px;
+    }
+
+    .btn-xs {
+      padding: 4px 10px;
+      font-size: 11px;
+      border-radius: 6px;
+    }
+
+    .vars-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .var-card {
+      background: var(--bg);
+      border: 1px solid var(--bd);
+      border-radius: 12px;
+      padding: 12px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .var-card:hover {
+      border-color: rgba(30, 77, 53, 0.4);
+    }
+
+    .var-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px dashed var(--bd);
+    }
+
+    .var-badge {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--mu);
+      background: var(--bd);
+      padding: 2px 8px;
+      border-radius: 99px;
+    }
+
+    .var-badge.var-badge-main {
+      background: rgba(30, 77, 53, 0.12);
+      color: var(--g);
+    }
+    @media (prefers-color-scheme: dark) {
+      .var-badge.var-badge-main {
+        background: rgba(155, 197, 61, 0.15);
+        color: var(--l);
+      }
+    }
+
+    .var-btn-del {
+      background: none;
+      border: 0;
+      color: var(--rd);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .var-btn-del:hover {
+      background: rgba(198, 40, 40, 0.1);
+    }
+
+    .var-card-body {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .var-img-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      width: 76px;
+      flex-shrink: 0;
+    }
+
+    .var-preview {
+      width: 76px;
+      height: 76px;
+      border-radius: 10px;
+      background: var(--card);
+      border: 1px solid var(--bd);
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      color: var(--mu);
+      font-size: 11px;
+    }
+
+    .var-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .var-upload-btn {
+      width: 100%;
+      text-align: center;
+      cursor: pointer;
+      display: block;
+      font-weight: 600;
+    }
+
+    .var-upload-status {
+      font-size: 11px;
+      color: var(--mu);
+      min-height: 14px;
+      text-align: center;
+      width: 100%;
+    }
+
+    .var-fields {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .var-fields label {
+      font-size: 12px;
+      margin-bottom: 2px;
+      color: var(--mu);
+    }
+
+    .var-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .vars-summary {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid var(--bd);
+      font-size: 13px;
+      color: var(--mu);
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .vars-summary b {
+      color: var(--fg);
+    }
+
     /* login */
     .lg {
       min-height: 100vh;
@@ -631,38 +885,60 @@
 
   <!-- MODAL PRODUTO -->
   <div class="ov" id="m1">
-    <form class="md" id="fm" onsubmit="return false">
-      <h2 id="mt">Novo produto</h2>
-      <div class="f">
-        <div class="full"><label for="n">Nome</label><input id="n" maxlength="120"></div>
-        <div><label for="c">Categoria</label><select id="c"></select></div>
-        <div><label for="p">Preço (R$)</label><input id="p" type="number" step="0.01" min="0" inputmode="decimal"></div>
-        <div><label for="e">Estoque</label><input id="e" type="number" min="0" inputmode="numeric"></div>
-        <div><label for="t">Etiqueta (opcional)</label><input id="t" placeholder="Novo, Mais pedida…"></div>
-        <div class="full"><label for="d">Descrição curta (aparece no card)</label><input id="d" maxlength="120"></div>
-        <div class="full"><label for="dc">Descrição completa (aparece ao clicar em Adicionar)</label><textarea id="dc"
-            rows="4"></textarea></div>
-        <div><label for="co">Cores (opcional)</label><input id="co" placeholder="Verde, Preto, Branco">
-          <p class="hint">Separe por vírgula. Deixe vazio se não houver.</p>
-        </div>
-        <div><label for="ta">Tamanhos (opcional)</label><input id="ta" placeholder="P, M, G, GG">
-          <p class="hint">Separe por vírgula. Deixe vazio se não houver.</p>
-        </div>
-        <div class="full"><label>Foto do produto</label>
-          <div class="img">
-            <div class="th" id="pv" style="display:grid;place-items:center;color:var(--mu);font-size:12px">sem foto
+    <form class="md modal-fixed" id="fm" onsubmit="return false">
+      <div class="md-head">
+        <h2 id="mt">Novo produto</h2>
+        <button class="md-close" id="cx_top" type="button" title="Fechar" aria-label="Fechar">&times;</button>
+      </div>
+
+      <div class="md-body">
+        <div class="f">
+          <div class="full"><label for="n">Nome do produto</label><input id="n" maxlength="120" placeholder="Ex: Camiseta dry-fit TF Life"></div>
+          <div><label for="c">Categoria</label><select id="c"></select></div>
+          <div><label for="t">Etiqueta (opcional)</label><input id="t" placeholder="Novo, Mais pedida…"></div>
+          <div class="full"><label for="d">Descrição curta (aparece no card)</label><input id="d" maxlength="120" placeholder="Ex: Tecido leve e respirável"></div>
+          <div class="full"><label for="dc">Descrição completa (aparece ao clicar em Adicionar)</label><textarea id="dc"
+              rows="3" placeholder="Detalhes do produto, benefícios, composição…"></textarea></div>
+          <div><label for="co">Cores gerais (opcional)</label><input id="co" placeholder="Verde, Preto, Branco">
+            <p class="hint">Opções gerais da peça. Deixe vazio se definir nas fotos abaixo.</p>
+          </div>
+          <div><label for="ta">Tamanhos (opcional)</label><input id="ta" placeholder="P, M, G, GG">
+            <p class="hint">Separe por vírgula se houver.</p>
+          </div>
+
+          <!-- SEÇÃO DE FOTOS E VARIAÇÕES -->
+          <div class="full vars-section">
+            <div class="vars-header">
+              <div>
+                <label class="vars-title">Fotos e Variações (Preço e Estoque)</label>
+                <p class="hint" style="margin:2px 0 0">Para cada foto, defina nome/opção, preço e quantidade em estoque.</p>
+              </div>
+              <button class="btn o btn-sm" id="btn-add-var" type="button">
+                + Adicionar foto / variação
+              </button>
             </div>
-            <div style="flex:1"><input id="fi" type="file" accept="image/jpeg,image/png,image/webp">
-              <p class="hint" id="fh">JPG, PNG ou WebP. A imagem é reduzida automaticamente.</p>
+
+            <div id="vars-list" class="vars-list">
+              <!-- Cards de variações renderizados via JS -->
+            </div>
+
+            <div class="vars-summary" id="vars-summary">
+              <span id="vars-resumo-est">Estoque total: <b>0 un.</b></span>
+              <span id="vars-resumo-prc">Preço base: <b>R$ 0,00</b></span>
             </div>
           </div>
+
+          <div class="full ck" style="margin-top:6px"><input id="a" type="checkbox" checked><label for="a" style="margin:0">Mostrar na
+              loja</label></div>
         </div>
-        <div class="full ck"><input id="a" type="checkbox" checked><label for="a" style="margin:0">Mostrar na
-            loja</label></div>
+        <p class="err" id="me" role="alert"></p>
       </div>
-      <p class="err" id="me" role="alert"></p>
-      <div class="ft"><button class="btn d" id="del" type="button">Excluir</button><button class="btn o" id="cx1"
-          type="button">Cancelar</button><button class="btn" id="sv" type="button">Salvar produto</button></div>
+
+      <div class="md-foot">
+        <button class="btn d" id="del" type="button" style="margin-right:auto">Excluir produto</button>
+        <button class="btn o" id="cx1" type="button">Cancelar</button>
+        <button class="btn" id="sv" type="button">Salvar produto</button>
+      </div>
     </form>
   </div>
 
@@ -849,7 +1125,19 @@
       var v = L.filter(function (p) { return (!f || p.categoria == f) && (!q || (p.nome || "").toLowerCase().indexOf(q) > -1) }).sort(function (a, b) { return (a.categoria + a.nome).localeCompare(b.categoria + b.nome) });
       $("tb").innerHTML = v.map(function (p) {
         var low = p.estoque <= 5;
-        return '<tr class="' + (p.ativo ? "" : "off") + '"><td><div class="pn">' + (p.imagem ? '<img class="th" src="' + esc(p.imagem) + '" alt="">' : '<span class="th"></span>') + '<div><strong>' + esc(p.nome) + '</strong><br><small style="color:var(--mu)">' + esc(p.descricao) + '</small></div></div></td><td><span class="pill">' + esc(p.categoria) + '</span></td><td>' + br(p.preco) + '</td><td class="' + (low ? "low" : "") + '">' + p.estoque + '</td><td>' + (p.ativo ? "Ativo" : "Oculto") + '</td><td class="ac"><button class="btn o" data-e="' + esc(p.id) + '">Editar</button></td></tr>'
+        var capaImg = p.imagem || (p.variacoes && p.variacoes[0] && p.variacoes[0].imagem);
+        var precoTxt = br(p.preco);
+        if (p.variacoes && p.variacoes.length > 1) {
+          var precos = p.variacoes.map(function(vx){ return Number(vx.preco) || 0; }).filter(function(pr){ return pr > 0; });
+          if (precos.length) {
+            var minP = Math.min.apply(null, precos), maxP = Math.max.apply(null, precos);
+            if (minP !== maxP) precoTxt = "A partir de " + br(minP);
+          }
+        }
+        var varBadge = (p.variacoes && p.variacoes.length > 1)
+          ? ' <small style="display:inline-block;padding:1px 6px;border-radius:99px;background:var(--bd);color:var(--mu);font-size:11px;font-weight:700">' + p.variacoes.length + ' fotos</small>'
+          : '';
+        return '<tr class="' + (p.ativo ? "" : "off") + '"><td><div class="pn">' + (capaImg ? '<img class="th" src="' + esc(capaImg) + '" alt="">' : '<span class="th"></span>') + '<div><strong>' + esc(p.nome) + '</strong>' + varBadge + '<br><small style="color:var(--mu)">' + esc(p.descricao) + '</small></div></div></td><td><span class="pill">' + esc(p.categoria) + '</span></td><td>' + precoTxt + '</td><td class="' + (low ? "low" : "") + '">' + p.estoque + '</td><td>' + (p.ativo ? "Ativo" : "Oculto") + '</td><td class="ac"><button class="btn o" data-e="' + esc(p.id) + '">Editar</button></td></tr>'
       }).join("");
       $("em").hidden = v.length > 0;
       $("s1").textContent = L.length; $("s2").textContent = L.filter(function (p) { return p.ativo }).length; $("s3").textContent = L.filter(function (p) { return p.estoque <= 5 }).length
@@ -857,56 +1145,290 @@
     $("q").oninput = $("fc").onchange = drawP;
     $("tb").onclick = function (e) { var b = e.target.closest("[data-e]"); if (b) abrirP(S.produtos.filter(function (p) { return p.id == b.dataset.e })[0]) };
     $("np").onclick = function () { if (!S.categorias.length) { toast("Cadastre uma categoria primeiro."); return } abrirP(null) };
-    var imgUrl = "";
-    function pv(u) { imgUrl = u || ""; $("pv").innerHTML = u ? '<img class="th" style="width:72px;height:72px" src="' + esc(u) + '" alt="">' : "sem foto" }
-    function abrirP(p) {
-      edit = p; $("mt").textContent = p ? "Editar produto" : "Novo produto"; $("del").style.display = p ? "" : "none"; $("me").textContent = ""; $("fi").value = "";
-      $("n").value = p ? p.nome : ""; $("c").value = p ? p.categoria : (S.categorias[0] || {}).nome; $("p").value = p ? p.preco : ""; $("e").value = p ? p.estoque : ""; $("t").value = p ? p.etiqueta || "" : "";
-      $("d").value = p ? p.descricao || "" : ""; $("dc").value = p ? p.descricao_completa || "" : ""; $("co").value = p ? p.cores || "" : ""; $("ta").value = p ? p.tamanhos || "" : ""; $("a").checked = p ? p.ativo : true; pv(p ? p.imagem : ""); modal("m1", true)
-    }
-    $("cx1").onclick = function () { modal("m1", false) };
-    /* reduz a foto no navegador e envia ao Drive pelo Apps Script com bloqueio de botão */
-    $("fi").onchange = function () {
-      var f = this.files[0]; if (!f) return;
-      var svBtn = $("sv");
-      svBtn.disabled = true;
-      svBtn.textContent = "Aguarde o upload da foto…";
-      $("fh").textContent = "Enviando foto para o Google Drive…";
-      $("fh").style.color = "var(--mu)";
 
-      var rd = new FileReader(); rd.onload = function () {
-        var im = new Image(); im.onload = function () {
-          var m = 900, s = Math.min(1, m / Math.max(im.width, im.height)), c = document.createElement("canvas"); c.width = Math.round(im.width * s); c.height = Math.round(im.height * s);
+    /* ---------- gerenciamento de fotos & variacoes de produto ---------- */
+    var varsProduto = [];
+    var uploadsEmAndamento = 0;
+
+    function atualizarStatusBotaoSalvar() {
+      var b = $("sv");
+      if (uploadsEmAndamento > 0) {
+        b.disabled = true;
+        b.textContent = "Aguarde o upload da foto…";
+      } else {
+        b.disabled = false;
+        b.textContent = "Salvar produto";
+      }
+    }
+
+    function salvarValoresAtuaisDosCampos() {
+      var cards = document.querySelectorAll("#vars-list .var-card");
+      cards.forEach(function (card) {
+        var idx = Number(card.dataset.idx);
+        if (varsProduto[idx]) {
+          var nomeInp = card.querySelector(".var-nome");
+          var precoInp = card.querySelector(".var-preco");
+          var estInp = card.querySelector(".var-estoque");
+          if (nomeInp) varsProduto[idx].nome = nomeInp.value;
+          if (precoInp) varsProduto[idx].preco = precoInp.value === "" ? "" : parseFloat(precoInp.value);
+          if (estInp) varsProduto[idx].estoque = estInp.value === "" ? "" : parseInt(estInp.value, 10);
+        }
+      });
+    }
+
+    function atualizarResumoVars() {
+      var totEst = 0;
+      var menorPreco = Infinity;
+      varsProduto.forEach(function (v) {
+        var e = parseInt(v.estoque, 10) || 0;
+        totEst += e;
+        var p = parseFloat(v.preco);
+        if (!isNaN(p) && p >= 0 && p < menorPreco) menorPreco = p;
+      });
+      if (menorPreco === Infinity) menorPreco = 0;
+      if ($("vars-resumo-est")) $("vars-resumo-est").innerHTML = "Estoque total: <b>" + totEst + " un.</b>";
+      if ($("vars-resumo-prc")) $("vars-resumo-prc").innerHTML = "Preço base: <b>" + br(menorPreco) + "</b>";
+    }
+
+    function renderVars() {
+      var container = $("vars-list");
+      if (!container) return;
+      if (!varsProduto || !varsProduto.length) {
+        varsProduto = [{
+          id: "v_" + Date.now(),
+          imagem: "",
+          nome: "Padrão",
+          preco: "",
+          estoque: ""
+        }];
+      }
+
+      var h = "";
+      varsProduto.forEach(function (v, idx) {
+        var isMain = (idx === 0);
+        var imgHtml = v.imagem
+          ? '<img src="' + esc(v.imagem) + '" alt="">'
+          : '<span class="var-no-img">sem foto</span>';
+
+        h += '<div class="var-card" data-idx="' + idx + '">'
+          + '  <div class="var-card-head">'
+          + '    <div class="var-badge ' + (isMain ? 'var-badge-main' : '') + '">'
+          +        (isMain ? 'Foto 1 · Capa Principal' : 'Foto ' + (idx + 1))
+          + '    </div>'
+          +      (varsProduto.length > 1 ? '<button type="button" class="var-btn-del" data-del-var="' + idx + '" title="Remover esta foto">✕ Remover</button>' : '')
+          + '  </div>'
+          + '  <div class="var-card-body">'
+          + '    <div class="var-img-box">'
+          + '      <div class="var-preview" id="var-pv-' + idx + '">' + imgHtml + '</div>'
+          + '      <label class="btn o btn-xs var-upload-btn">'
+          + '        <span>' + (v.imagem ? 'Trocar foto' : 'Enviar foto') + '</span>'
+          + '        <input type="file" accept="image/jpeg,image/png,image/webp" data-var-file="' + idx + '" style="display:none">'
+          + '      </label>'
+          + '      <div class="var-upload-status" id="var-status-' + idx + '"></div>'
+          + '    </div>'
+          + '    <div class="var-fields">'
+          + '      <div>'
+          + '        <label>Nome / Opção (opcional)</label>'
+          + '        <input type="text" class="var-nome" data-idx="' + idx + '" value="' + esc(v.nome || '') + '" placeholder="Ex: Verde, Preto, 900g, etc.">'
+          + '      </div>'
+          + '      <div class="var-grid-2">'
+          + '        <div>'
+          + '          <label>Preço (R$)</label>'
+          + '          <input type="number" step="0.01" min="0" class="var-preco" data-idx="' + idx + '" value="' + (v.preco !== undefined ? v.preco : '') + '" placeholder="0,00" required>'
+          + '        </div>'
+          + '        <div>'
+          + '          <label>Estoque (un)</label>'
+          + '          <input type="number" min="0" step="1" class="var-estoque" data-idx="' + idx + '" value="' + (v.estoque !== undefined ? v.estoque : '') + '" placeholder="0" required>'
+          + '        </div>'
+          + '      </div>'
+          + '    </div>'
+          + '  </div>'
+          + '</div>';
+      });
+
+      container.innerHTML = h;
+      atualizarResumoVars();
+    }
+
+    $("btn-add-var").onclick = function () {
+      salvarValoresAtuaisDosCampos();
+      var defaultPreco = varsProduto.length ? (varsProduto[0].preco || "") : "";
+      varsProduto.push({
+        id: "v_" + Date.now() + "_" + Math.random().toString(36).substr(2, 4),
+        imagem: "",
+        nome: "Opção " + (varsProduto.length + 1),
+        preco: defaultPreco,
+        estoque: 10
+      });
+      renderVars();
+    };
+
+    $("vars-list").addEventListener("click", function (e) {
+      var delBtn = e.target.closest("[data-del-var]");
+      if (delBtn) {
+        salvarValoresAtuaisDosCampos();
+        var idx = Number(delBtn.dataset.delVar);
+        varsProduto.splice(idx, 1);
+        renderVars();
+      }
+    });
+
+    $("vars-list").addEventListener("input", function (e) {
+      var t = e.target;
+      var idx = Number(t.dataset.idx);
+      if (isNaN(idx) || !varsProduto[idx]) return;
+      if (t.classList.contains("var-nome")) varsProduto[idx].nome = t.value;
+      if (t.classList.contains("var-preco")) varsProduto[idx].preco = t.value === "" ? "" : parseFloat(t.value);
+      if (t.classList.contains("var-estoque")) varsProduto[idx].estoque = t.value === "" ? "" : parseInt(t.value, 10);
+      atualizarResumoVars();
+    });
+
+    $("vars-list").addEventListener("change", function (e) {
+      var fileInput = e.target;
+      if (!fileInput || fileInput.dataset.varFile === undefined) return;
+      var idx = Number(fileInput.dataset.varFile);
+      var f = fileInput.files[0];
+      if (!f || !varsProduto[idx]) return;
+
+      uploadsEmAndamento++;
+      atualizarStatusBotaoSalvar();
+
+      var statusEl = $("var-status-" + idx);
+      if (statusEl) {
+        statusEl.textContent = "Enviando… ⏳";
+        statusEl.style.color = "var(--mu)";
+      }
+
+      var rd = new FileReader();
+      rd.onload = function () {
+        var im = new Image();
+        im.onload = function () {
+          var m = 900, s = Math.min(1, m / Math.max(im.width, im.height));
+          var c = document.createElement("canvas");
+          c.width = Math.round(im.width * s);
+          c.height = Math.round(im.height * s);
           c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
           api("imagem", { dados: c.toDataURL("image/jpeg", .85) }).then(function (r) {
-            svBtn.disabled = false;
-            svBtn.textContent = "Salvar produto";
+            uploadsEmAndamento = Math.max(0, uploadsEmAndamento - 1);
+            atualizarStatusBotaoSalvar();
             if (r.ok) {
-              pv(r.url);
-              $("fh").textContent = "Foto enviada com sucesso!";
-              $("fh").style.color = "var(--g)";
+              varsProduto[idx].imagem = r.url;
+              var pvEl = $("var-pv-" + idx);
+              if (pvEl) pvEl.innerHTML = '<img src="' + esc(r.url) + '" alt="">';
+              if (statusEl) {
+                statusEl.textContent = "✓ Enviada";
+                statusEl.style.color = "var(--g)";
+              }
             } else {
-              $("fh").textContent = r.erro || "Não foi possível enviar a foto.";
-              $("fh").style.color = "var(--rd)";
+              if (statusEl) {
+                statusEl.textContent = r.erro || "Falha no envio";
+                statusEl.style.color = "var(--rd)";
+              }
+            }
+          }).catch(function () {
+            uploadsEmAndamento = Math.max(0, uploadsEmAndamento - 1);
+            atualizarStatusBotaoSalvar();
+            if (statusEl) {
+              statusEl.textContent = "Erro de conexão";
+              statusEl.style.color = "var(--rd)";
             }
           });
         };
         im.onerror = function () {
-          svBtn.disabled = false;
-          svBtn.textContent = "Salvar produto";
-          $("fh").textContent = "Arquivo de imagem inválido.";
-          $("fh").style.color = "var(--rd)";
+          uploadsEmAndamento = Math.max(0, uploadsEmAndamento - 1);
+          atualizarStatusBotaoSalvar();
+          if (statusEl) {
+            statusEl.textContent = "Imagem inválida";
+            statusEl.style.color = "var(--rd)";
+          }
         };
         im.src = rd.result;
-      }; rd.readAsDataURL(f);
-    };
+      };
+      rd.readAsDataURL(f);
+    });
+
+    function abrirP(p) {
+      edit = p;
+      $("mt").textContent = p ? "Editar produto" : "Novo produto";
+      $("del").style.display = p ? "" : "none";
+      $("me").textContent = "";
+      uploadsEmAndamento = 0;
+      atualizarStatusBotaoSalvar();
+
+      $("n").value = p ? p.nome : "";
+      $("c").value = p ? p.categoria : (S.categorias[0] || {}).nome;
+      $("t").value = p ? (p.etiqueta || "") : "";
+      $("d").value = p ? (p.descricao || "") : "";
+      $("dc").value = p ? (p.descricao_completa || "") : "";
+      $("co").value = p ? (p.cores || "") : "";
+      $("ta").value = p ? (p.tamanhos || "") : "";
+      $("a").checked = p ? p.ativo : true;
+
+      varsProduto = [];
+      if (p && p.variacoes && p.variacoes.length) {
+        varsProduto = JSON.parse(JSON.stringify(p.variacoes));
+      } else {
+        varsProduto = [{
+          id: "v_" + Date.now(),
+          imagem: p ? (p.imagem || "") : "",
+          nome: (p && p.cores) ? p.cores.split(",")[0].trim() : "Padrão",
+          preco: (p && p.preco !== undefined) ? p.preco : "",
+          estoque: (p && p.estoque !== undefined) ? p.estoque : ""
+        }];
+      }
+      renderVars();
+      modal("m1", true);
+    }
+    $("cx1").onclick = $("cx_top").onclick = function () { modal("m1", false); };
+
     $("sv").onclick = function () {
       var b = $("sv"), n = $("n").value.trim();
       if (!n) { $("me").textContent = "Informe o nome do produto."; return; }
+      salvarValoresAtuaisDosCampos();
+
+      if (!varsProduto || !varsProduto.length) {
+        $("me").textContent = "Adicione ao menos uma foto/variação com preço e estoque.";
+        return;
+      }
+
+      for (var i = 0; i < varsProduto.length; i++) {
+        var v = varsProduto[i];
+        var pNum = parseFloat(v.preco);
+        if (isNaN(pNum) || pNum < 0) {
+          $("me").textContent = "Informe um preço válido para a " + (i === 0 ? "Foto 1 (Capa)" : "Foto " + (i + 1)) + ".";
+          return;
+        }
+        var eNum = parseInt(v.estoque, 10);
+        if (isNaN(eNum) || eNum < 0) {
+          $("me").textContent = "Informe o estoque para a " + (i === 0 ? "Foto 1 (Capa)" : "Foto " + (i + 1)) + ".";
+          return;
+        }
+      }
+
+      var capaImg = "";
+      for (var j = 0; j < varsProduto.length; j++) {
+        if (varsProduto[j].imagem) { capaImg = varsProduto[j].imagem; break; }
+      }
+
+      var totEstoque = varsProduto.reduce(function (acc, v) { return acc + (parseInt(v.estoque, 10) || 0); }, 0);
+      var precoPrincipal = parseFloat(varsProduto[0].preco) || 0;
+
       var p = {
-        id: edit ? edit.id : "", nome: n, categoria: $("c").value, preco: parseFloat($("p").value || 0), estoque: parseInt($("e").value || 0, 10), etiqueta: $("t").value,
-        descricao: $("d").value, descricao_completa: $("dc").value, cores: $("co").value, tamanhos: $("ta").value, imagem: imgUrl, ativo: $("a").checked
+        id: edit ? edit.id : "",
+        nome: n,
+        categoria: $("c").value,
+        preco: precoPrincipal,
+        estoque: totEstoque,
+        etiqueta: $("t").value,
+        descricao: $("d").value,
+        descricao_completa: $("dc").value,
+        cores: $("co").value,
+        tamanhos: $("ta").value,
+        imagem: capaImg,
+        ativo: $("a").checked,
+        variacoes: varsProduto
       };
+
       busy(b, true, "Salvar produto");
       api("salvarProduto", { p: p }).then(function (r) {
         busy(b, false, "Salvar produto");
@@ -914,10 +1436,9 @@
         modal("m1", false);
         toast("Produto salvo.");
         notificarLoja();
-        // Atualização instantânea da interface sem esperar segundo roundtrip
         if (edit) {
-          for (var i = 0; i < S.produtos.length; i++) {
-            if (S.produtos[i].id == edit.id) { S.produtos[i] = Object.assign({}, S.produtos[i], p); break; }
+          for (var k = 0; k < S.produtos.length; k++) {
+            if (S.produtos[k].id == edit.id) { S.produtos[k] = Object.assign({}, S.produtos[k], p); break; }
           }
         } else {
           p.id = r.id || ('p' + Date.now().toString(36));
