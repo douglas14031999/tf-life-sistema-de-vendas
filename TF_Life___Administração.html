@@ -104,7 +104,9 @@
     }
 
     header img {
-      height: 44px
+      height: 44px;
+      width: auto;
+      display: block;
     }
 
     header .r {
@@ -473,7 +475,7 @@
   <div class="lg" id="lg">
     <form class="lc" id="lf" autocomplete="on">
       <picture>
-        <source media="(prefers-color-scheme:dark)" srcset="logo-branca.png">
+        <source media="(prefers-color-scheme:dark)" srcset="logo-branca.png?v=2">
         <img src="logo.png" alt="TF Life">
       </picture>
       <h1>Entrar</h1>
@@ -491,7 +493,7 @@
   <div class="lg" id="pw" hidden>
     <form class="lc" id="pf">
       <picture>
-        <source media="(prefers-color-scheme:dark)" srcset="logo-branca.png">
+        <source media="(prefers-color-scheme:dark)" srcset="logo-branca.png?v=2">
         <img src="logo.png" alt="TF Life">
       </picture>
       <h1>Crie sua senha</h1>
@@ -513,8 +515,8 @@
   <div id="app" hidden>
     <header>
       <div class="w"><picture>
-          <source media="(prefers-color-scheme:dark)" srcset="logo-branca.png">
-          <img src="logo.png" alt="TF Life">
+          <source type="image/svg+xml" srcset="logo-branca.svg">
+          <img src="logo-branca.png?v=2" alt="TF Life">
         </picture>
         <div class="r"><span id="who"></span><button class="btn o" id="mp">Alterar senha</button><button class="btn o"
             id="out">Sair</button></div>
