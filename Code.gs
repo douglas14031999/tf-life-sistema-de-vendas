@@ -141,6 +141,25 @@ function linhaLivre(s) {
   for (var i = 1; i < v.length; i++) if (!v[i][0]) return i + 1;
   s.insertRowAfter(s.getMaxRows()); return s.getMaxRows();
 }
+
+/**
+ * Move arquivo de imagem do Google Drive para a lixeira para liberar espaço.
+ */
+function excluirArquivoDrive(url) {
+  if (!url || typeof url !== 'string') return;
+  try {
+    var m = /[?&]id=([a-zA-Z0-9_-]+)/.exec(url) || /\/d\/([a-zA-Z0-9_-]+)/.exec(url);
+    if (m && m[1]) {
+      var file = DriveApp.getFileById(m[1]);
+      if (file) {
+        file.setTrashed(true);
+      }
+    }
+  } catch (e) {
+    Logger.log('Erro ao mover arquivo do Drive para a lixeira: ' + e);
+  }
+}
+
 function salvarProduto(d) {
   var p = d.p || {}, s = SS.getSheetByName('Produtos');
   var nome = String(p.nome || '').trim(), preco = Number(p.preco), est = parseInt(p.estoque, 10);
@@ -151,6 +170,10 @@ function salvarProduto(d) {
   var img = String(p.imagem || ''); if (img && !/^https:\/\//.test(img)) return { ok: 0, erro: 'Imagem inválida.' };
   var id = p.id || 'p' + Date.now().toString(36);
   var ex = rd('Produtos').filter(function (r) { return String(r.id) === id; })[0];
+  // Se a foto anterior for substituída por uma nova, apaga a anterior do Drive
+  if (ex && ex.imagem && img && ex.imagem !== img) {
+    excluirArquivoDrive(ex.imagem);
+  }
   var linha = ex ? ex._row : linhaLivre(s);
   var vals = [id, nome, p.categoria, p.descricao, p.descricao_completa, preco, est, p.etiqueta, !!p.ativo, img, p.cores, p.tamanhos]
     .map(function (v) { return safe(typeof v === 'string' ? v.trim() : v); });
@@ -161,6 +184,10 @@ function salvarProduto(d) {
 function excluirProduto(d) {
   var r = rd('Produtos').filter(function (x) { return String(x.id) === d.id; })[0];
   if (!r) return { ok: 0, erro: 'Produto não encontrado.' };
+  // Apaga a foto do produto no Google Drive para economizar espaço
+  if (r.imagem) {
+    excluirArquivoDrive(r.imagem);
+  }
   SS.getSheetByName('Produtos').getRange(r._row, 1, 1, PROD.length).clearContent();
   limparCache();
   return { ok: 1 };
