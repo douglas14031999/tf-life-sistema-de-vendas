@@ -1473,6 +1473,37 @@
       }
     }
 
+    .modal-foto-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-share-icon {
+      background: transparent;
+      border: 1px solid var(--bd);
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--g);
+      cursor: pointer;
+      transition: background .18s, color .18s, transform .15s;
+    }
+
+    .btn-share-icon:hover {
+      background: var(--tint);
+      transform: scale(1.08);
+    }
+
+    @media(prefers-color-scheme:dark) {
+      .btn-share-icon {
+        color: var(--l);
+      }
+    }
+
     .modal-foto-footer {
       padding: 12px 20px 16px;
       display: flex;
@@ -1480,6 +1511,38 @@
       justify-content: flex-end;
       gap: 10px;
       background: var(--card);
+    }
+
+    .modal-foto-btn-share {
+      background: var(--tint);
+      border: 1px solid var(--bd);
+      border-radius: 99px;
+      padding: 9px 18px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--g);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background .18s, color .18s, transform .15s, border-color .18s;
+      margin-right: auto;
+    }
+
+    .modal-foto-btn-share:hover {
+      background: rgba(30, 77, 53, 0.12);
+      border-color: var(--g);
+      transform: translateY(-1px);
+    }
+
+    @media(prefers-color-scheme:dark) {
+      .modal-foto-btn-share {
+        color: var(--l);
+      }
+      .modal-foto-btn-share:hover {
+        background: rgba(157, 200, 63, 0.15);
+        border-color: var(--l);
+      }
     }
 
     .modal-foto-btn-fechar {
@@ -1518,6 +1581,78 @@
     .modal-foto-btn-comprar:hover {
       background: #163a28;
       transform: translateY(-1px);
+    }
+
+    @media(max-width: 600px) {
+      .modal-foto-footer {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        padding: 12px 16px 16px;
+      }
+      .modal-foto-btn-share {
+        grid-column: span 1;
+        margin-right: 0;
+        justify-content: center;
+        padding: 10px 12px;
+        font-size: 13px;
+        width: 100%;
+      }
+      .modal-foto-btn-fechar {
+        grid-column: span 1;
+        text-align: center;
+        padding: 10px 12px;
+        font-size: 13px;
+        width: 100%;
+      }
+      .modal-foto-btn-comprar {
+        grid-column: 1 / -1;
+        justify-content: center;
+        padding: 12px 18px;
+        font-size: 14px;
+        width: 100%;
+      }
+    }
+
+    /* Notificação Toast */
+    .toast-aviso {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(30px);
+      background: rgba(18, 38, 28, 0.95);
+      color: #fff;
+      padding: 12px 22px;
+      border-radius: 99px;
+      font-size: 13px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: transform .25s cubic-bezier(0.16, 1, 0.3, 1), opacity .25s ease;
+      z-index: 9999;
+      max-width: 90vw;
+      text-align: center;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .toast-aviso.on {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* Destaque suave ao abrir produto direto por link */
+    @keyframes pulseHighlight {
+      0% { box-shadow: 0 0 0 0 rgba(30, 77, 53, 0.6); }
+      70% { box-shadow: 0 0 0 10px rgba(30, 77, 53, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(30, 77, 53, 0); }
+    }
+    .card-destaque {
+      animation: pulseHighlight 1.5s 2;
+      border-color: var(--g) !important;
     }
 
   </style>
@@ -1592,7 +1727,15 @@
   <div class="ov" id="ov"></div>
   <aside class="dr" id="dr" aria-label="Painel lateral">
     <div class="vw" id="v1">
-      <div class="dh"><button class="back" id="bk">← Voltar</button><button id="c1" aria-label="Fechar">×</button></div>
+      <div class="dh">
+        <button class="back" id="bk">← Voltar</button>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button type="button" class="btn-share-icon" id="v1-btn-share" title="Compartilhar produto" aria-label="Compartilhar produto">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+          </button>
+          <button id="c1" aria-label="Fechar">×</button>
+        </div>
+      </div>
       <div class="db" id="dt"></div>
       <div class="df"><button class="btn" id="go">Adicionar ao carrinho</button>
         <p class="err" id="e1" role="alert"></p>
@@ -1657,7 +1800,12 @@
           <small id="modal-foto-cat"></small>
           <h3 id="modal-foto-title"></h3>
         </div>
-        <button type="button" class="modal-foto-close" id="modal-foto-close" aria-label="Fechar visualização">×</button>
+        <div class="modal-foto-header-actions">
+          <button type="button" class="btn-share-icon" id="modal-foto-btn-share-top" title="Compartilhar produto" aria-label="Compartilhar produto">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+          </button>
+          <button type="button" class="modal-foto-close" id="modal-foto-close" aria-label="Fechar visualização">×</button>
+        </div>
       </div>
 
       <div class="modal-foto-stage-wrap">
@@ -1686,11 +1834,18 @@
       </div>
 
       <div class="modal-foto-footer">
+        <button type="button" class="modal-foto-btn-share" id="modal-foto-btn-share" title="Compartilhar com familiares e amigos">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+          <span>Compartilhar</span>
+        </button>
         <button type="button" class="modal-foto-btn-fechar" id="modal-foto-btn-fechar">Fechar</button>
         <button type="button" class="modal-foto-btn-comprar" id="modal-foto-btn-comprar">Comprar produto</button>
       </div>
     </div>
   </div>
+
+  <!-- Notificação Toast -->
+  <div id="toast" class="toast-aviso" role="status" aria-live="polite"></div>
 
   <script>
     /* Cole aqui a URL /exec gerada na implantação do Apps Script.
@@ -1787,6 +1942,7 @@
       grid();
       cart = cart.filter(function (i) { return prod(i.id); });
       draw();
+      verificarLinkDiretoProduto();
       if (!isCached) {
         try { localStorage.setItem(CACHE_KEY, JSON.stringify(d)); } catch (e) {}
       }
@@ -1850,7 +2006,7 @@
         var varBadge = (p.variacoes && p.variacoes.length > 1)
           ? ' <span style="font-size:11px;color:var(--mu)">(' + p.variacoes.length + ' fotos)</span>'
           : '';
-        return '<article class="card" data-card-prod="' + esc(p.id) + '"><div class="pic">' + (p.etiqueta ? '<span class="tag">' + esc(p.etiqueta) + '</span>' : '') + foto(p) + '</div><div class="cb"><small>' + esc(p.categoria) + '</small><h3>' + esc(p.nome) + '</h3><small>' + esc(p.descricao) + varBadge + '</small><div class="pr"><strong>' + precoTxt + '</strong><button class="add" data-i="' + esc(p.id) + '"' + (esg ? ' disabled' : '') + '>' + (esg ? 'Esgotado' : 'Adicionar') + '</button></div></div></article>'
+        return '<article class="card" id="card-prod-' + esc(p.id) + '" data-card-prod="' + esc(p.id) + '"><div class="pic">' + (p.etiqueta ? '<span class="tag">' + esc(p.etiqueta) + '</span>' : '') + foto(p) + '</div><div class="cb"><small>' + esc(p.categoria) + '</small><h3>' + esc(p.nome) + '</h3><small>' + esc(p.descricao) + varBadge + '</small><div class="pr"><strong>' + precoTxt + '</strong><button class="add" data-i="' + esc(p.id) + '"' + (esg ? ' disabled' : '') + '>' + (esg ? 'Esgotado' : 'Adicionar') + '</button></div></div></article>'
       }).join("")
         : '<p class="mu">Nenhum produto nesta categoria ainda.</p>';
     }
@@ -2218,6 +2374,180 @@
       $("modal-foto-preco").textContent = br(foto.preco != null ? foto.preco : p.preco);
     }
 
+    /* ---------- toast & compartilhamento inteligente com foto e link direto ---------- */
+    var toastTimer = null;
+    function mostrarToast(msg, dur) {
+      var t = $("toast");
+      if (!t) return;
+      t.textContent = msg;
+      t.classList.add("on");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () {
+        t.classList.remove("on");
+      }, dur || 3200);
+    }
+
+    function dataUrlParaArquivo(dataUrl, nomeBase) {
+      try {
+        var partes = dataUrl.split(',');
+        var matchMime = partes[0].match(/:(.*?);/);
+        var mime = (matchMime && matchMime[1]) || 'image/jpeg';
+        var bstr = atob(partes[1]);
+        var n = bstr.length;
+        var u8arr = new Uint8Array(n);
+        while (n--) {
+          u8arr[n] = bstr.charCodeAt(n);
+        }
+        var ext = mime.indexOf('png') > -1 ? 'png' : (mime.indexOf('webp') > -1 ? 'webp' : 'jpg');
+        return new File([u8arr], (nomeBase || 'produto') + '.' + ext, { type: mime });
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function obterArquivoFoto(imgUrl, nomeBase) {
+      if (!imgUrl) return Promise.resolve(null);
+      if (imgUrl.indexOf('data:') === 0) {
+        return Promise.resolve(dataUrlParaArquivo(imgUrl, nomeBase));
+      }
+      return fetch(imgUrl, { mode: 'cors' })
+        .then(function (res) { return res.blob(); })
+        .then(function (blob) {
+          var ext = blob.type.indexOf('png') > -1 ? 'png' : 'jpg';
+          return new File([blob], (nomeBase || 'produto') + '.' + ext, { type: blob.type || 'image/jpeg' });
+        })
+        .catch(function () { return null; });
+    }
+
+    function fallbackCompartilhar(texto, link) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(texto).catch(function () {});
+      }
+      var zapUrl = "https://api.whatsapp.com/send?text=" + encodeURIComponent(texto);
+      window.open(zapUrl, "_blank");
+      mostrarToast("Link copiado! Abrindo WhatsApp...", 3000);
+    }
+
+    function compartilharProduto(p, fotoOuVar) {
+      if (!p) return;
+
+      var fotoItem = fotoOuVar || (modalFotoState.aberto ? modalFotoState.fotos[modalFotoState.curIdx] : null);
+      var precoFinal = (fotoItem && fotoItem.preco != null) ? fotoItem.preco : p.preco;
+      var precoFmt = br(precoFinal);
+
+      var imgUrl = (fotoItem && fotoItem.url) || p.imagem || (p.variacoes && p.variacoes[0] && p.variacoes[0].imagem) || "";
+      var legendaCor = (fotoItem && (fotoItem.legenda || fotoItem.nome)) || "";
+      var infoCor = (legendaCor && legendaCor !== p.nome) ? ("\n🎨 Opção: " + legendaCor) : "";
+      var desc = (p.descricao_completa || p.descricao || "").trim();
+
+      var urlBase = window.location.origin + window.location.pathname;
+      var linkDireto = urlBase + '?p=' + encodeURIComponent(p.id);
+      if (modalFotoState.aberto && modalFotoState.curIdx > 0) {
+        linkDireto += '&foto=' + modalFotoState.curIdx;
+      }
+
+      var titulo = p.nome + " - TF Life";
+      var textoMsg = "✨ *" + p.nome + "*\n"
+                   + (desc ? ("\n" + desc + "\n") : "")
+                   + "\n💰 *Valor:* " + precoFmt + infoCor
+                   + "\n\n👉 *Veja a foto e compre direto no link:* \n" + linkDireto;
+
+      if (navigator.share) {
+        mostrarToast("Abrindo opções de compartilhamento...", 1200);
+        var nomeLimpo = (p.nome || 'produto').replace(/[^a-zA-Z0-9]/g, '_');
+        obterArquivoFoto(imgUrl, nomeLimpo)
+          .then(function (file) {
+            var dados = {
+              title: titulo,
+              text: textoMsg,
+              url: linkDireto
+            };
+            if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+              dados.files = [file];
+            }
+            return navigator.share(dados);
+          })
+          .catch(function (err) {
+            if (err && err.name === 'AbortError') return;
+            navigator.share({
+              title: titulo,
+              text: textoMsg,
+              url: linkDireto
+            }).catch(function (e) {
+              if (e && e.name === 'AbortError') return;
+              fallbackCompartilhar(textoMsg, linkDireto);
+            });
+          });
+      } else {
+        fallbackCompartilhar(textoMsg, linkDireto);
+      }
+    }
+
+    function compartilharProdutoAtual() {
+      var p = modalFotoState.p || (sel && sel.p);
+      if (!p) return;
+      var curFoto = (modalFotoState.fotos && modalFotoState.fotos[modalFotoState.curIdx]) || null;
+      compartilharProduto(p, curFoto);
+    }
+
+    var diretoProcessado = false;
+    function verificarLinkDiretoProduto(forcado) {
+      if (diretoProcessado && !forcado) return;
+      var params = new URLSearchParams(window.location.search);
+      var pid = params.get('p') || params.get('produto');
+      if (!pid && window.location.hash) {
+        var m = window.location.hash.match(/[#&?]p(?:roduto)?=([^&#]+)/);
+        if (m) pid = decodeURIComponent(m[1]);
+      }
+      if (!pid) return;
+      if (!P || !P.length) return;
+
+      var prodAlvo = prod(pid) || P.filter(function (x) {
+        return String(x.id).toLowerCase() === String(pid).toLowerCase() ||
+               String(x.nome || '').trim().toLowerCase() === decodeURIComponent(String(pid)).trim().toLowerCase();
+      })[0];
+
+      if (!prodAlvo) return;
+      diretoProcessado = true;
+
+      // Se o produto pertencer a uma categoria que não está no filtro atual, exibe Todas
+      if (cur !== "Todos" && cur !== prodAlvo.categoria) {
+        cur = "Todos";
+        chips();
+        grid();
+      }
+
+      setTimeout(function () {
+        var card = document.getElementById('card-prod-' + prodAlvo.id) ||
+                   document.querySelector('[data-card-prod="' + prodAlvo.id + '"]');
+        if (card) {
+          card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          card.classList.add('card-destaque');
+          setTimeout(function () { card.classList.remove('card-destaque'); }, 3000);
+        }
+
+        abrirModalFotos(prodAlvo.id);
+
+        var fIdx = params.get('foto');
+        var cNome = params.get('cor');
+        if (fIdx != null && !isNaN(parseInt(fIdx, 10))) {
+          irParaFotoModal(parseInt(fIdx, 10));
+        } else if (cNome) {
+          var cNomeLower = decodeURIComponent(cNome).trim().toLowerCase();
+          for (var i = 0; i < modalFotoState.fotos.length; i++) {
+            var f = modalFotoState.fotos[i];
+            if (f.legenda && f.legenda.toLowerCase().indexOf(cNomeLower) > -1) {
+              irParaFotoModal(i);
+              break;
+            }
+          }
+        }
+      }, 300);
+    }
+    window.addEventListener("hashchange", function () {
+      verificarLinkDiretoProduto(true);
+    });
+
     /* ---------- eventos ---------- */
     document.addEventListener("click", function (e) {
       // 1. Clique em miniatura no modal de fotos
@@ -2278,6 +2608,14 @@
 
     $("modal-foto-close").onclick = fecharModalFotos;
     $("modal-foto-btn-fechar").onclick = fecharModalFotos;
+    var btnShareFtr = $("modal-foto-btn-share");
+    if (btnShareFtr) btnShareFtr.onclick = compartilharProdutoAtual;
+    var btnShareTop = $("modal-foto-btn-share-top");
+    if (btnShareTop) btnShareTop.onclick = compartilharProdutoAtual;
+    var btnShareV1 = $("v1-btn-share");
+    if (btnShareV1) btnShareV1.onclick = function () {
+      if (sel && sel.p) compartilharProduto(sel.p, sel.varAtiva);
+    };
     $("modal-foto-prev").onclick = function (e) { e.stopPropagation(); mudarFotoModal(-1); };
     $("modal-foto-next").onclick = function (e) { e.stopPropagation(); mudarFotoModal(1); };
     $("modal-foto-ov").onclick = function (e) {
