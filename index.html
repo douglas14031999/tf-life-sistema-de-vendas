@@ -2455,7 +2455,7 @@
       }
       var zapUrl = "https://api.whatsapp.com/send?text=" + encodeURIComponent(texto);
       window.open(zapUrl, "_blank");
-      mostrarToast("Link copiado! Abrindo WhatsApp...", 3000);
+      mostrarToast("📋 Copiado para a área de transferência! Cole na conversa com Ctrl+V", 4000);
     }
 
     function compartilharProduto(p, fotoOuVar) {
@@ -2473,35 +2473,48 @@
       var hostUrl = (window.location.origin && window.location.origin.indexOf('http') === 0)
         ? window.location.origin
         : 'https://tflife.provacanoa.tech';
-      var linkDireto = hostUrl + '/p/' + encodeURIComponent(p.id) + '.html';
-      if (modalFotoState.aberto && modalFotoState.curIdx > 0) {
-        linkDireto += '?foto=' + modalFotoState.curIdx;
-      }
 
-      var titulo = p.nome + " - TF Life";
+      // Identifica o índice exato da foto/variação atual para carregar a prévia correta no WhatsApp
+      var fotoIdx = modalFotoState.aberto ? modalFotoState.curIdx : ((sel && sel.varIdx != null) ? sel.varIdx : 0);
+      var fileSuffix = (fotoIdx > 0) ? ('_' + fotoIdx) : '';
+      var linkDireto = hostUrl + '/p/' + encodeURIComponent(p.id) + fileSuffix + '.html';
+
+      var titulo = p.nome + (legendaCor && legendaCor !== p.nome ? (" · " + legendaCor) : "") + " - TF Life";
       var textoMsg = "✨ *" + p.nome + "*\n"
                    + (desc ? ("\n" + desc + "\n") : "")
                    + "\n💰 *Valor:* " + precoFmt + infoCor
                    + "\n\n👉 *Veja a foto e compre direto no link:* \n" + linkDireto;
 
-      var nomeLimpo = (p.nome || 'produto').replace(/[^a-zA-Z0-9]/g, '_');
+      var nomeLimpo = (p.nome || 'produto').replace(/[^a-zA-Z0-9]/g, '_') + fileSuffix;
 
+      var isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && window.innerWidth < 800);
+
+      // No computador: copia imediatamente para a área de transferência para colar na conversa
+      if (!isMobile) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(textoMsg).catch(function () {});
+        }
+        obterArquivoFoto(imgUrl, nomeLimpo).then(function (file) {
+          if (file && navigator.clipboard && window.ClipboardItem) {
+            try {
+              var ci = {};
+              ci[file.type] = file;
+              navigator.clipboard.write([new ClipboardItem(ci)]).catch(function () {});
+            } catch (e) {}
+          }
+        });
+        var zapUrl = "https://api.whatsapp.com/send?text=" + encodeURIComponent(textoMsg);
+        window.open(zapUrl, "_blank");
+        mostrarToast("📋 Copiado para a área de transferência! Cole na conversa com Ctrl+V", 4000);
+        return;
+      }
+
+      // No celular: prepara envio com foto nativa
       mostrarToast("Preparando foto para compartilhar...", 1500);
 
       obterArquivoFoto(imgUrl, nomeLimpo).then(function (file) {
-        // Tenta copiar imagem para a área de transferência caso esteja no PC (WhatsApp Web cola a foto com Ctrl+V)
-        if (file && navigator.clipboard && window.ClipboardItem) {
-          try {
-            var item = {};
-            item[file.type] = file;
-            navigator.clipboard.write([new ClipboardItem(item)]).catch(function () {});
-          } catch (e) {}
-        }
-
         // Se suporta envio nativo de arquivos (Celular - Android / iOS Safari)
         if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
-          // IMPORTANTE: Passa APENAS files e text (SEM passar a chave 'url' separada),
-          // para que o Chrome/Android não descarte o arquivo e o WhatsApp envie a foto real com a legenda!
           return navigator.share({
             title: titulo,
             text: textoMsg,
@@ -2527,7 +2540,6 @@
           });
         }
 
-        // Fallback para Desktop (WhatsApp Web / Clipboard)
         fallbackCompartilhar(textoMsg, linkDireto);
       });
     }
