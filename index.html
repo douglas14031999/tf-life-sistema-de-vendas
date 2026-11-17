@@ -2338,7 +2338,7 @@
 
       var stage = $("modal-foto-stage");
       if (foto.url) {
-        stage.innerHTML = '<img src="' + esc(foto.url) + '" alt="' + esc(foto.legenda) + '" loading="eager">';
+        stage.innerHTML = '<img src="' + esc(foto.url) + '" crossorigin="anonymous" alt="' + esc(foto.legenda) + '" loading="eager">';
       } else {
         stage.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + icone(p.categoria) + '</svg>';
       }
@@ -2405,18 +2405,48 @@
       }
     }
 
+    function obterBlobDeImagemDOM(imgUrl, nomeBase) {
+      return new Promise(function (resolve) {
+        var stageImg = document.querySelector("#modal-foto-stage img");
+        if (stageImg && stageImg.complete && stageImg.naturalWidth > 0) {
+          try {
+            var canvas = document.createElement("canvas");
+            canvas.width = stageImg.naturalWidth;
+            canvas.height = stageImg.naturalHeight;
+            var ctx = canvas.getContext("2d");
+            ctx.drawImage(stageImg, 0, 0);
+            canvas.toBlob(function (blob) {
+              if (blob) {
+                resolve(new File([blob], (nomeBase || "produto") + ".jpg", { type: "image/jpeg" }));
+              } else {
+                resolve(null);
+              }
+            }, "image/jpeg", 0.92);
+            return;
+          } catch (e) {}
+        }
+        resolve(null);
+      });
+    }
+
     function obterArquivoFoto(imgUrl, nomeBase) {
       if (!imgUrl) return Promise.resolve(null);
       if (imgUrl.indexOf('data:') === 0) {
         return Promise.resolve(dataUrlParaArquivo(imgUrl, nomeBase));
       }
       return fetch(imgUrl, { mode: 'cors' })
-        .then(function (res) { return res.blob(); })
-        .then(function (blob) {
-          var ext = blob.type.indexOf('png') > -1 ? 'png' : 'jpg';
-          return new File([blob], (nomeBase || 'produto') + '.' + ext, { type: blob.type || 'image/jpeg' });
+        .then(function (res) {
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.blob();
         })
-        .catch(function () { return null; });
+        .then(function (blob) {
+          var mime = blob.type || 'image/jpeg';
+          var ext = mime.indexOf('png') > -1 ? 'png' : 'jpg';
+          return new File([blob], (nomeBase || 'produto') + '.' + ext, { type: mime });
+        })
+        .catch(function () {
+          return obterBlobDeImagemDOM(imgUrl, nomeBase);
+        });
     }
 
     function fallbackCompartilhar(texto, link) {
@@ -2452,35 +2482,52 @@
                    + "\n💰 *Valor:* " + precoFmt + infoCor
                    + "\n\n👉 *Veja a foto e compre direto no link:* \n" + linkDireto;
 
-      if (navigator.share) {
-        mostrarToast("Abrindo opções de compartilhamento...", 1200);
-        var nomeLimpo = (p.nome || 'produto').replace(/[^a-zA-Z0-9]/g, '_');
-        obterArquivoFoto(imgUrl, nomeLimpo)
-          .then(function (file) {
-            var dados = {
-              title: titulo,
-              text: textoMsg,
-              url: linkDireto
-            };
-            if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
-              dados.files = [file];
-            }
-            return navigator.share(dados);
-          })
-          .catch(function (err) {
+      var nomeLimpo = (p.nome || 'produto').replace(/[^a-zA-Z0-9]/g, '_');
+
+      mostrarToast("Preparando foto para compartilhar...", 1500);
+
+      obterArquivoFoto(imgUrl, nomeLimpo).then(function (file) {
+        // Tenta copiar imagem para a área de transferência caso esteja no PC (WhatsApp Web cola a foto com Ctrl+V)
+        if (file && navigator.clipboard && window.ClipboardItem) {
+          try {
+            var item = {};
+            item[file.type] = file;
+            navigator.clipboard.write([new ClipboardItem(item)]).catch(function () {});
+          } catch (e) {}
+        }
+
+        // Se suporta envio nativo de arquivos (Celular - Android / iOS Safari)
+        if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+          // IMPORTANTE: Passa APENAS files e text (SEM passar a chave 'url' separada),
+          // para que o Chrome/Android não descarte o arquivo e o WhatsApp envie a foto real com a legenda!
+          return navigator.share({
+            title: titulo,
+            text: textoMsg,
+            files: [file]
+          }).then(function () {
+            mostrarToast("Compartilhado com sucesso!", 2000);
+          }).catch(function (err) {
             if (err && err.name === 'AbortError') return;
-            navigator.share({
-              title: titulo,
-              text: textoMsg,
-              url: linkDireto
-            }).catch(function (e) {
-              if (e && e.name === 'AbortError') return;
-              fallbackCompartilhar(textoMsg, linkDireto);
-            });
+            fallbackCompartilhar(textoMsg, linkDireto);
           });
-      } else {
+        }
+
+        // Se navigator.share existir mas NÃO suportar envio de arquivo
+        if (navigator.share) {
+          return navigator.share({
+            title: titulo,
+            text: textoMsg
+          }).then(function () {
+            mostrarToast("Compartilhado com sucesso!", 2000);
+          }).catch(function (e) {
+            if (e && e.name === 'AbortError') return;
+            fallbackCompartilhar(textoMsg, linkDireto);
+          });
+        }
+
+        // Fallback para Desktop (WhatsApp Web / Clipboard)
         fallbackCompartilhar(textoMsg, linkDireto);
-      }
+      });
     }
 
     function compartilharProdutoAtual() {
