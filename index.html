@@ -2338,7 +2338,7 @@
 
       var stage = $("modal-foto-stage");
       if (foto.url) {
-        stage.innerHTML = '<img src="' + esc(foto.url) + '" crossorigin="anonymous" alt="' + esc(foto.legenda) + '" loading="eager">';
+        stage.innerHTML = '<img src="' + esc(foto.url) + '" alt="' + esc(foto.legenda) + '" loading="eager">';
       } else {
         stage.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + icone(p.categoria) + '</svg>';
       }
