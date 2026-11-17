@@ -952,22 +952,74 @@
         </div>
       </section>
 
+      <!-- CONFIGURAÇÕES DA LOJA -->
       <section id="t-cf" hidden>
-        <form class="md" id="cfm"
-          style="margin:20px 0;max-width:560px;background:var(--card);border:1px solid var(--bd)"
-          onsubmit="return false">
-          <h2>Configurações da loja</h2>
-          <div class="f">
-            <div class="full"><label for="cw">WhatsApp que recebe os pedidos</label><input id="cw" inputmode="numeric"
-                placeholder="5582999999999">
-              <p class="hint">55 + DDD + número, só dígitos.</p>
-            </div>
-            <div class="full"><label for="cx">Faixa rotativa (uma frase por linha)</label><textarea id="cx"
-                rows="5"></textarea></div>
+        <div style="max-width:820px;margin:24px 0">
+          <div style="margin-bottom:24px">
+            <h2 style="font-size:22px;margin:0 0 6px">Configurações da Loja</h2>
+            <p style="color:var(--mu);margin:0;font-size:14px">Personalize o canal de vendas e os comunicados exibidos no topo da sua loja.</p>
           </div>
-          <p class="err" id="cerr"></p>
-          <div class="ft"><button class="btn" id="cs" type="button">Salvar configurações</button></div>
-        </form>
+
+          <form id="cfm" onsubmit="return false" style="display:flex;flex-direction:column;gap:20px">
+            <!-- Card WhatsApp -->
+            <div style="background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:24px">
+              <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:18px">
+                <div style="width:42px;height:42px;border-radius:12px;background:rgba(37,211,102,0.12);color:#15803d;display:flex;align-items:center;justify-content:center;flex:none">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2z"/></svg>
+                </div>
+                <div>
+                  <h3 style="font-size:16px;margin:0 0 4px;font-weight:700">WhatsApp de Atendimento & Pedidos</h3>
+                  <p style="color:var(--mu);margin:0;font-size:13px;line-height:1.4">Número oficial onde a loja recebe as notificações de novos pedidos e atende os clientes.</p>
+                </div>
+              </div>
+
+              <div>
+                <label for="cw" style="display:block;margin-bottom:6px;font-weight:700;font-size:14px">Número do WhatsApp (com DDI e DDD)</label>
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                  <input id="cw" inputmode="numeric" placeholder="5582999999999" maxlength="16" style="max-width:320px;font-size:15px;letter-spacing:0.5px">
+                  <a id="cw-test-btn" href="#" target="_blank" rel="noopener noreferrer" class="btn o" style="display:none;padding:10px 18px;font-size:13px">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="flex:none"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2z"/></svg>
+                    <span>Testar número no WhatsApp</span>
+                  </a>
+                </div>
+                <p class="hint" style="margin-top:8px">Formato: <strong>55</strong> (Brasil) + <strong>DDD</strong> (2 dígitos) + <strong>Número</strong> (apenas números). Exemplo: <code>5582996323874</code>.</p>
+              </div>
+            </div>
+
+            <!-- Card Faixa Rotativa -->
+            <div style="background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:24px">
+              <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:18px">
+                <div style="width:42px;height:42px;border-radius:12px;background:var(--tint);color:var(--g);display:flex;align-items:center;justify-content:center;flex:none">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                </div>
+                <div>
+                  <h3 style="font-size:16px;margin:0 0 4px;font-weight:700">Faixa Promocional Rotativa</h3>
+                  <p style="color:var(--mu);margin:0;font-size:13px;line-height:1.4">Frases em destaque que ficam alternando continuamente no topo de todas as páginas da loja.</p>
+                </div>
+              </div>
+
+              <div>
+                <label for="cx" style="display:block;margin-bottom:6px;font-weight:700;font-size:14px">Frases em destaque (uma por linha)</label>
+                <textarea id="cx" rows="5" placeholder="🚚 Frete grátis para compras acima de R$ 150&#10;💳 Parcele em até 12x no cartão&#10;⚡ Envio rápido para todo o Brasil" style="font-size:14px;line-height:1.6;resize:vertical;padding:12px 14px"></textarea>
+                <p class="hint" style="margin-top:6px">Escreva cada mensagem em uma linha separada. Se deixar em branco, a faixa ficará oculta na loja.</p>
+
+                <!-- Pré-visualização da faixa -->
+                <div id="cx-preview-box" style="margin-top:14px;background:var(--tint);border-radius:12px;padding:14px 16px;display:none">
+                  <span style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--mu);display:block;margin-bottom:10px;letter-spacing:0.5px">Pré-visualização das frases na loja:</span>
+                  <div id="cx-preview-items" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Rodapé de Ação -->
+            <div style="background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px">
+              <div>
+                <p class="err" id="cerr" style="margin:0;min-height:auto"></p>
+              </div>
+              <button class="btn" id="cs" type="button" style="padding:12px 32px;font-size:15px">Salvar configurações</button>
+            </div>
+          </form>
+        </div>
       </section>
     </main>
   </div>
@@ -1256,6 +1308,7 @@
             preencherCats(); drawP(); drawPed(); drawC(); drawU(); drawCp();
             if (S.config.whatsapp) $("cw").value = S.config.whatsapp;
             if (S.config.faixa) $("cx").value = String(S.config.faixa).split("|").join("\n");
+            atualizarPreviewConfig();
           }
         }
       } catch (e) {}
@@ -1268,6 +1321,7 @@
         preencherCats(); drawP(); drawPed(); drawC(); drawU(); drawCp();
         $("cw").value = S.config.whatsapp || "";
         $("cx").value = String(S.config.faixa || "").split("|").join("\n");
+        atualizarPreviewConfig();
       });
     }
     function preencherCats() {
@@ -1292,6 +1346,7 @@
       [].forEach.call(document.querySelectorAll(".tabs button"), function (x) { x.setAttribute("aria-pressed", x == b) });
       ["pr", "pd", "ca", "us", "cf", "cp"].forEach(function (t) { $("t-" + t).hidden = t != b.dataset.tab });
       if (b.dataset.tab === "pd") drawPed();
+      if (b.dataset.tab === "cf") atualizarPreviewConfig();
     };
 
     /* ---------- produtos ---------- */
@@ -2126,13 +2181,67 @@
     };
 
     /* ---------- configurações ---------- */
+    function atualizarPreviewConfig() {
+      // 1. WhatsApp test button
+      var rawZap = ($("cw").value || "").replace(/\D/g, "");
+      var testBtn = $("cw-test-btn");
+      if (testBtn) {
+        if (rawZap.length >= 10) {
+          var numCompleto = rawZap.startsWith("55") ? rawZap : ("55" + rawZap);
+          testBtn.href = "https://wa.me/" + numCompleto;
+          testBtn.style.display = "inline-flex";
+        } else {
+          testBtn.style.display = "none";
+        }
+      }
+
+      // 2. Faixa rotativa preview
+      var rawFaixa = $("cx").value || "";
+      var box = $("cx-preview-box");
+      var list = $("cx-preview-items");
+      if (box && list) {
+        var linhas = rawFaixa.split("\n").map(function (x) { return x.trim(); }).filter(Boolean);
+        if (linhas.length > 0) {
+          box.style.display = "block";
+          list.innerHTML = linhas.map(function (frase) {
+            return '<span class="pill" style="font-size:13px;padding:4px 12px;background:var(--card);border:1px solid var(--bd)">📢 ' + esc(frase) + '</span>';
+          }).join("");
+        } else {
+          box.style.display = "none";
+          list.innerHTML = "";
+        }
+      }
+    }
+
+    $("cw").oninput = $("cx").oninput = atualizarPreviewConfig;
+
     $("cs").onclick = function () {
-      var b = $("cs"); busy(b, true, "Salvar configurações"); $("cerr").textContent = "";
+      var b = $("cs");
+      $("cerr").textContent = "";
+
+      var zapLimpo = ($("cw").value || "").replace(/\D/g, "");
+      if ((zapLimpo.length === 10 || zapLimpo.length === 11) && !zapLimpo.startsWith("55")) {
+        zapLimpo = "55" + zapLimpo;
+        $("cw").value = zapLimpo;
+      }
+
+      if (zapLimpo.length < 12) {
+        $("cerr").textContent = "WhatsApp inválido: digite 55 + DDD + número (ex: 5582996323874).";
+        return;
+      }
+
+      busy(b, true, "Salvar configurações");
       var faixa = $("cx").value.split("\n").map(function (x) { return x.trim().replace(/\|/g, "") }).filter(Boolean).join("|");
-      api("salvarConfig", { whatsapp: $("cw").value, faixa: faixa }).then(function (r) {
+      api("salvarConfig", { whatsapp: zapLimpo, faixa: faixa }).then(function (r) {
         busy(b, false, "Salvar configurações");
-        if (!r.ok) { $("cerr").textContent = r.erro || "Erro ao salvar."; return } toast("Configurações salvas."); notificarLoja(); iniciar()
-      })
+        if (!r.ok) {
+          $("cerr").textContent = r.erro || "Erro ao salvar.";
+          return;
+        }
+        toast("Configurações salvas.");
+        notificarLoja();
+        iniciar();
+      });
     };
 
     document.addEventListener("keydown", function (e) { if (e.key == "Escape") ["m1", "m2", "m3", "m4", "m5"].forEach(function (m) { modal(m, false) }) });
