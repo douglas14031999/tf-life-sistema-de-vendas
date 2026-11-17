@@ -2372,6 +2372,29 @@
 
       $("modal-foto-legenda").textContent = foto.legenda || p.nome;
       $("modal-foto-preco").textContent = br(foto.preco != null ? foto.preco : p.preco);
+      atualizarMetaTagsProduto(p, foto);
+    }
+
+    function atualizarMetaTagsProduto(p, foto) {
+      if (!p) return;
+      try {
+        var titulo = p.nome + (foto && foto.legenda && foto.legenda !== p.nome ? (' · ' + foto.legenda) : '') + ' - TF Life';
+        document.title = titulo;
+        var metaOgTitle = document.querySelector('meta[property="og:title"]');
+        if (metaOgTitle) metaOgTitle.setAttribute('content', titulo);
+
+        var desc = (p.descricao_completa || p.descricao || '');
+        var metaOgDesc = document.querySelector('meta[property="og:description"]');
+        if (metaOgDesc) metaOgDesc.setAttribute('content', desc);
+
+        var imgUrl = (foto && foto.url) || p.imagem || (p.variacoes && p.variacoes[0] && p.variacoes[0].imagem);
+        if (imgUrl) {
+          var metaOgImg = document.querySelector('meta[property="og:image"]');
+          if (metaOgImg) metaOgImg.setAttribute('content', imgUrl);
+          var metaOgImgSec = document.querySelector('meta[property="og:image:secure_url"]');
+          if (metaOgImgSec) metaOgImgSec.setAttribute('content', imgUrl);
+        }
+      } catch (e) {}
     }
 
     /* ---------- toast & compartilhamento inteligente com foto e link direto ---------- */
@@ -2474,10 +2497,12 @@
         ? window.location.origin
         : 'https://tflife.provacanoa.tech';
 
-      // Identifica o índice exato da foto/variação atual para carregar a prévia correta no WhatsApp
+      // Link 100% dinâmico no index.html (escalável para qualquer quantidade de produtos)
       var fotoIdx = modalFotoState.aberto ? modalFotoState.curIdx : ((sel && sel.varIdx != null) ? sel.varIdx : 0);
-      var fileSuffix = (fotoIdx > 0) ? ('_' + fotoIdx) : '';
-      var linkDireto = hostUrl + '/p/' + encodeURIComponent(p.id) + fileSuffix + '.html';
+      var linkDireto = hostUrl + '/index.html?p=' + encodeURIComponent(p.id);
+      if (fotoIdx > 0) {
+        linkDireto += '&foto=' + fotoIdx;
+      }
 
       var titulo = p.nome + (legendaCor && legendaCor !== p.nome ? (" · " + legendaCor) : "") + " - TF Life";
       var textoMsg = "✨ *" + p.nome + "*\n"
@@ -2485,7 +2510,7 @@
                    + "\n💰 *Valor:* " + precoFmt + infoCor
                    + "\n\n👉 *Veja a foto e compre direto no link:* \n" + linkDireto;
 
-      var nomeLimpo = (p.nome || 'produto').replace(/[^a-zA-Z0-9]/g, '_') + fileSuffix;
+      var nomeLimpo = (p.nome || 'produto').replace(/[^a-zA-Z0-9]/g, '_') + (fotoIdx > 0 ? ('_' + fotoIdx) : '');
 
       var isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && window.innerWidth < 800);
 
