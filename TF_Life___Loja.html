@@ -981,6 +981,13 @@
       border-color: var(--g)
     }
 
+    .opt button.btn-tam-esgotado {
+      opacity: 0.55;
+      text-decoration: line-through;
+      border-color: var(--bd);
+      cursor: not-allowed;
+    }
+
     .st {
       font-size: 13px;
       color: var(--mu)
@@ -1697,7 +1704,7 @@
         { id: "p001", nome: "Copo térmico 500 ml", categoria: "Copos", descricao: "Mantém gelado por horas", descricao_completa: "Copo térmico em aço inox com parede dupla, mantém bebidas geladas por horas e quentes por mais tempo. Tampa com vedação e boca larga para colocar gelo.", preco: 59.9, estoque: 20, etiqueta: "Novo", cores: "Verde, Preto, Branco", tamanhos: "" },
         { id: "p002", nome: "Garrafa squeeze 900 ml", categoria: "Copos", descricao: "Tampa antivazamento", descricao_completa: "Garrafa squeeze de 900 ml livre de BPA, com bico retrátil e tampa antivazamento.", preco: 39.9, estoque: 30, etiqueta: "", cores: "Verde, Preto", tamanhos: "" },
         { id: "p003", nome: "Quentinha frango e batata-doce", categoria: "Quentinhas", descricao: "Feita no dia, 350 g", descricao_completa: "Filé de frango grelhado, batata-doce assada e legumes no vapor. Preparada no dia, em pote próprio para micro-ondas.", preco: 24.9, estoque: 40, etiqueta: "Mais pedida", cores: "", tamanhos: "" },
-        { id: "p007", nome: "Camiseta dry-fit TF Life", categoria: "Camisas", descricao: "Verde escuro, P ao GG", descricao_completa: "Camiseta de treino em tecido dry-fit leve, com secagem rápida e proteção contra odores.", preco: 79.9, estoque: 30, etiqueta: "", cores: "Verde escuro, Preto, Branco", tamanhos: "P, M, G, GG" }]
+        { id: "p007", nome: "Camiseta dry-fit TF Life", categoria: "Camisas", descricao: "P ao GG, várias cores", descricao_completa: "Camiseta de treino em tecido dry-fit leve, com secagem rápida e proteção contra odores.", preco: 79.9, estoque: 42, etiqueta: "", cores: "Azul, Verde, Rosa", tamanhos: "P, M, G, GG", variacoes: [{ id: "v1", nome: "Azul", preco: 79.9, estoque: 12, tamanhos: { P: 2, M: 4, G: 5, GG: 1 } }, { id: "v2", nome: "Verde", preco: 79.9, estoque: 16, tamanhos: { P: 1, M: 3, G: 10, GG: 2 } }, { id: "v3", nome: "Rosa", preco: 79.9, estoque: 14, tamanhos: { P: 0, M: 2, G: 12, GG: 0 } }] }]
     };
 
     var I = {
@@ -1794,17 +1801,28 @@
       requestAnimationFrame(function () { var w = $("mq").scrollWidth / 2; $("mq").style.setProperty("--dur", Math.max(15, w / 70) + "s") });
     }
     function prod(id) { return P.filter(function (p) { return p.id == id })[0] }
-    function noCarrinho(id, varId) {
+    function noCarrinho(id, varId, tam) {
       return cart.reduce(function (n, i) {
-        if (i.id == id && (!varId || i.varId == varId)) return n + i.q;
+        var matchId = (i.id == id);
+        var matchVar = (!varId || i.varId == varId || (!i.varId && !varId));
+        var matchTam = (!tam || i.tam == tam);
+        if (matchId && matchVar && matchTam) return n + i.q;
         return n;
       }, 0);
     }
-    function restante(p, varItem) {
-      if (varItem && varItem.estoque !== undefined) {
-        return Math.max(0, (parseInt(varItem.estoque, 10) || 0) - noCarrinho(p.id, varItem.id || ''));
+    function estoqueDisponivel(p, varItem, tam) {
+      if (varItem && varItem.tamanhos && tam && varItem.tamanhos[tam] !== undefined) {
+        return parseInt(varItem.tamanhos[tam], 10) || 0;
       }
-      return Math.max(0, (parseInt(p.estoque, 10) || 0) - noCarrinho(p.id));
+      if (varItem && varItem.estoque !== undefined) {
+        return parseInt(varItem.estoque, 10) || 0;
+      }
+      return parseInt(p.estoque, 10) || 0;
+    }
+    function restante(p, varItem, tam) {
+      var est = estoqueDisponivel(p, varItem, tam);
+      var noCar = noCarrinho(p.id, varItem ? (varItem.id || varItem.nome) : '', tam);
+      return Math.max(0, est - noCar);
     }
 
     /* ---------- vitrine ---------- */
@@ -1844,12 +1862,22 @@
       var p = prod(id); if (!p) return;
       var vars = (p.variacoes && p.variacoes.length) ? p.variacoes : [];
       var varAtiva = vars.length ? vars[0] : null;
+      var tams = lista(p.tamanhos);
+      var tamPadrao = "";
+      if (tams.length) {
+        for (var ti = 0; ti < tams.length; ti++) {
+          if (restante(p, varAtiva, tams[ti]) > 0) {
+            tamPadrao = tams[ti];
+            break;
+          }
+        }
+      }
       sel = {
         p: p,
         varAtiva: varAtiva,
         varIdx: 0,
         cor: (varAtiva && varAtiva.nome) ? varAtiva.nome : "",
-        tam: "",
+        tam: tamPadrao,
         q: 1
       };
       $("e1").textContent = "";
@@ -1863,8 +1891,14 @@
       var varItem = sel.varAtiva;
       var curPreco = varItem ? Number(varItem.preco) : Number(p.preco);
       var curImg = (varItem && varItem.imagem) ? varItem.imagem : p.imagem;
-      var rest = restante(p, varItem);
-      if (sel.q > rest) sel.q = Math.max(1, rest);
+      var tams = lista(p.tamanhos);
+
+      var rest = restante(p, varItem, sel.tam);
+      if (tams.length && !sel.tam) {
+        rest = restante(p, varItem, "");
+      }
+      if (sel.q > rest && rest > 0) sel.q = rest;
+      if (sel.q < 1) sel.q = 1;
 
       var imgHtml = curImg
         ? '<img src="' + esc(curImg) + '" alt="' + esc(p.nome) + '">'
@@ -1895,17 +1929,44 @@
       if (cores.length && !vars.length) {
         h += '<div class="op"><b>Cor <span class="st">(opcional)</span></b><div class="opt">' + cores.map(function (c) { return '<button data-cor="' + esc(c) + '" aria-pressed="' + (sel.cor == c) + '">' + esc(c) + '</button>' }).join("") + '</div></div>';
       }
-      var tams = lista(p.tamanhos);
       if (tams.length) {
-        h += '<div class="op"><b>Tamanho</b><div class="opt">' + tams.map(function (c) { return '<button data-tam="' + esc(c) + '" aria-pressed="' + (sel.tam == c) + '">' + esc(c) + '</button>' }).join("") + '</div></div>';
+        h += '<div class="op"><b>Tamanho</b><div class="opt">';
+        tams.forEach(function (c) {
+          var isSel = (sel.tam == c);
+          var rTam = restante(p, varItem, c);
+          var esg = (rTam <= 0);
+          var badgeTxt = esg ? ' · Esgotado' : (rTam <= 5 ? ' · ' + rTam + ' un' : '');
+          h += '<button type="button" data-tam="' + esc(c) + '" aria-pressed="' + isSel + '"'
+             + (esg ? ' class="btn-tam-esgotado"' : '') + '>'
+             + esc(c) + '<span style="font-size:11px;opacity:0.8">' + badgeTxt + '</span></button>';
+        });
+        h += '</div></div>';
       }
 
-      h += '<div class="op"><b>Quantidade</b><div class="q"><button data-dq="-1" aria-label="Diminuir"' + (sel.q <= 1 ? ' disabled' : '') + '>−</button><span aria-live="polite">' + sel.q + '</span><button data-dq="1" aria-label="Aumentar"' + (sel.q >= rest ? ' disabled' : '') + '>+</button></div>'
-        + ' <span class="st' + (rest <= 5 ? ' low' : '') + '">' + (rest <= 0 ? 'Sem estoque disponível' : rest <= 5 ? 'Restam apenas ' + rest : 'Em estoque (' + rest + ' disponíveis)') + '</span></div>';
+      var msgEstoque = '';
+      if (tams.length && !sel.tam) {
+        msgEstoque = 'Selecione um tamanho acima';
+      } else if (rest <= 0) {
+        msgEstoque = 'Sem estoque disponível' + (sel.tam ? ' no tamanho ' + sel.tam : '');
+      } else if (rest <= 5) {
+        msgEstoque = 'Restam apenas ' + rest + ' disponíveis' + (sel.tam ? ' no tamanho ' + sel.tam : '');
+      } else {
+        msgEstoque = 'Em estoque (' + rest + ' disponíveis' + (sel.tam ? ' no tamanho ' + sel.tam : '') + ')';
+      }
+
+      h += '<div class="op"><b>Quantidade</b><div class="q"><button data-dq="-1" aria-label="Diminuir"' + (sel.q <= 1 || rest < 1 ? ' disabled' : '') + '>−</button><span aria-live="polite">' + (rest < 1 ? 0 : sel.q) + '</span><button data-dq="1" aria-label="Aumentar"' + (sel.q >= rest || rest < 1 ? ' disabled' : '') + '>+</button></div>'
+        + ' <span class="st' + (rest <= 5 ? ' low' : '') + '">' + msgEstoque + '</span></div>';
 
       $("dt").innerHTML = h;
-      $("go").disabled = rest < 1;
-      $("go").textContent = rest < 1 ? "Esgotado" : "Adicionar ao carrinho · " + br(curPreco * sel.q);
+      var bloqueado = (tams.length && !sel.tam) || rest < 1;
+      $("go").disabled = bloqueado;
+      if (tams.length && !sel.tam) {
+        $("go").textContent = "Selecione o tamanho";
+      } else if (rest < 1) {
+        $("go").textContent = "Esgotado";
+      } else {
+        $("go").textContent = "Adicionar ao carrinho · " + br(curPreco * sel.q);
+      }
     }
     function confirmar() {
       var p = sel.p;
@@ -1916,12 +1977,18 @@
       var itVarId = varItem ? (varItem.id || ('v_' + sel.varIdx)) : '';
 
       if (lista(p.tamanhos).length && !sel.tam) { $("e1").textContent = "Escolha um tamanho para continuar."; return }
-      if (sel.q > restante(p, varItem)) { $("e1").textContent = "Quantidade acima do estoque."; return }
+      var restAtual = restante(p, varItem, sel.tam);
+      if (restAtual < 1) { $("e1").textContent = "Tamanho esgotado nesta cor."; return }
+      if (sel.q > restAtual) { $("e1").textContent = "Quantidade acima do estoque disponível."; return }
 
       var x = cart.filter(function (i) {
         return i.id == p.id && i.varId == itVarId && i.cor == sel.cor && i.tam == sel.tam;
       })[0];
       if (x) {
+        if (x.q + sel.q > restAtual) {
+          $("e1").textContent = "Você já atingiu o estoque disponível (" + restAtual + " un) no carrinho.";
+          return;
+        }
         x.q += sel.q;
       } else {
         cart.push({
@@ -1955,7 +2022,7 @@
         if (p.variacoes && p.variacoes.length) {
           varObj = p.variacoes.filter(function (vx) { return vx.id === it.varId || vx.nome === it.varNome; })[0];
         }
-        var restItem = restante(p, varObj);
+        var restItem = restante(p, varObj, it.tam);
 
         h += '<div class="it">'
           + '<div class="it-thumb">' + imgHtml + '</div>'
@@ -2176,6 +2243,14 @@
           sel.varIdx = idx;
           sel.varAtiva = vars[idx];
           if (sel.varAtiva.nome) sel.cor = sel.varAtiva.nome;
+          if (sel.tam && restante(sel.p, sel.varAtiva, sel.tam) < 1) {
+            var tams = lista(sel.p.tamanhos);
+            var novoTam = "";
+            for (var ti = 0; ti < tams.length; ti++) {
+              if (restante(sel.p, sel.varAtiva, tams[ti]) > 0) { novoTam = tams[ti]; break; }
+            }
+            sel.tam = novoTam;
+          }
           sel.q = 1;
           drawDetalhe();
         }
@@ -2188,7 +2263,7 @@
         if (it) {
           var pr = prod(it.id);
           var varObj = (pr && pr.variacoes) ? pr.variacoes.filter(function(vx){ return vx.id === it.varId || vx.nome === it.varNome; })[0] : null;
-          if (restante(pr, varObj) > 0) { it.q++; grid(); draw(); }
+          if (restante(pr, varObj, it.tam) > 0) { it.q++; grid(); draw(); }
         }
       }
       if (d.m !== undefined && d.m !== "") { if (--cart[d.m].q < 1) cart.splice(d.m, 1); draw() }

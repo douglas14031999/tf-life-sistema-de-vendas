@@ -671,6 +671,97 @@
       color: var(--fg);
     }
 
+    .var-tam-box {
+      margin-top: 8px;
+      padding: 10px 12px;
+      background: var(--card);
+      border: 1px solid var(--bd);
+      border-radius: 10px;
+    }
+
+    .var-tam-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .var-tam-head label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--fg);
+      margin: 0;
+    }
+
+    .var-tam-subtotal {
+      font-size: 11px;
+      color: var(--mu);
+    }
+
+    .var-tam-subtotal b {
+      color: var(--g);
+    }
+    @media (prefers-color-scheme: dark) {
+      .var-tam-subtotal b {
+        color: var(--l);
+      }
+    }
+
+    .var-tam-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+      gap: 8px;
+    }
+
+    .var-tam-item {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      background: var(--bg);
+      border: 1px solid var(--bd);
+      border-radius: 8px;
+      padding: 6px;
+      align-items: center;
+      transition: border-color .15s;
+    }
+
+    .var-tam-item:focus-within {
+      border-color: var(--g);
+    }
+    @media (prefers-color-scheme: dark) {
+      .var-tam-item:focus-within {
+        border-color: var(--l);
+      }
+    }
+
+    .var-tam-label {
+      font-size: 11px;
+      font-weight: 900;
+      color: var(--g);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+    @media (prefers-color-scheme: dark) {
+      .var-tam-label {
+        color: var(--l);
+      }
+    }
+
+    .var-tam-input {
+      width: 100%;
+      height: 30px;
+      padding: 2px 4px;
+      font-size: 13px;
+      font-weight: 700;
+      text-align: center;
+      border-radius: 6px;
+      border: 1px solid var(--bd);
+      background: var(--card);
+      color: var(--fg);
+    }
+
     /* login */
     .lg {
       min-height: 100vh;
@@ -1093,6 +1184,7 @@
             <div class="vars-summary" id="vars-summary">
               <span id="vars-resumo-est">Estoque total: <b>0 un.</b></span>
               <span id="vars-resumo-prc">Preço base: <b>R$ 0,00</b></span>
+              <div id="vars-resumo-tams" style="width:100%;font-size:12px;color:var(--mu);margin-top:4px;display:none"></div>
             </div>
           </div>
 
@@ -1396,7 +1488,28 @@
         var varBadge = (p.variacoes && p.variacoes.length > 1)
           ? ' <small style="display:inline-block;padding:1px 6px;border-radius:99px;background:var(--bd);color:var(--mu);font-size:11px;font-weight:700">' + p.variacoes.length + ' fotos</small>'
           : '';
-        return '<tr class="' + (p.ativo ? "" : "off") + '"><td><div class="pn">' + (capaImg ? '<img class="th" src="' + esc(capaImg) + '" alt="">' : '<span class="th"></span>') + '<div><strong>' + esc(p.nome) + '</strong>' + varBadge + '<br><small style="color:var(--mu)">' + esc(p.descricao) + '</small></div></div></td><td><span class="pill">' + esc(p.categoria) + '</span></td><td>' + precoTxt + '</td><td class="' + (low ? "low" : "") + '">' + p.estoque + '</td><td>' + (p.ativo ? "Ativo" : "Oculto") + '</td><td class="ac"><button class="btn o" data-e="' + esc(p.id) + '">Editar</button></td></tr>'
+        var estoqueHtml = String(p.estoque);
+        if (p.tamanhos && p.variacoes && p.variacoes.length) {
+          var tamsLista = String(p.tamanhos || "").split(",").map(function(x){ return x.trim(); }).filter(Boolean);
+          var porTam = {};
+          tamsLista.forEach(function(tm){ porTam[tm] = 0; });
+          var temTamEst = false;
+          p.variacoes.forEach(function(vx){
+            if (vx.tamanhos) {
+              tamsLista.forEach(function(tm){
+                if (vx.tamanhos[tm] !== undefined) {
+                  porTam[tm] += (parseInt(vx.tamanhos[tm], 10) || 0);
+                  temTamEst = true;
+                }
+              });
+            }
+          });
+          if (temTamEst) {
+            var txtGrade = tamsLista.map(function(tm){ return tm + ': ' + porTam[tm]; }).join(' · ');
+            estoqueHtml = '<strong>' + p.estoque + '</strong><br><small style="color:var(--mu);font-size:11px">' + txtGrade + '</small>';
+          }
+        }
+        return '<tr class="' + (p.ativo ? "" : "off") + '"><td><div class="pn">' + (capaImg ? '<img class="th" src="' + esc(capaImg) + '" alt="">' : '<span class="th"></span>') + '<div><strong>' + esc(p.nome) + '</strong>' + varBadge + '<br><small style="color:var(--mu)">' + esc(p.descricao) + '</small></div></div></td><td><span class="pill">' + esc(p.categoria) + '</span></td><td>' + precoTxt + '</td><td class="' + (low ? "low" : "") + '">' + estoqueHtml + '</td><td>' + (p.ativo ? "Ativo" : "Oculto") + '</td><td class="ac"><button class="btn o" data-e="' + esc(p.id) + '">Editar</button></td></tr>'
       }).join("");
       $("em").hidden = v.length > 0;
       $("s1").textContent = L.length; $("s2").textContent = L.filter(function (p) { return p.ativo }).length; $("s3").textContent = L.filter(function (p) { return p.estoque <= 5 }).length
@@ -1420,7 +1533,16 @@
       }
     }
 
+    function extrairTamanhosForm() {
+      var raw = $("ta") ? $("ta").value : "";
+      return String(raw || "").split(",")
+        .map(function (x) { return x.trim(); })
+        .filter(Boolean);
+    }
+
     function salvarValoresAtuaisDosCampos() {
+      var tams = extrairTamanhosForm();
+      var temTams = tams.length > 0;
       var cards = document.querySelectorAll("#vars-list .var-card");
       cards.forEach(function (card) {
         var idx = Number(card.dataset.idx);
@@ -1430,7 +1552,22 @@
           var estInp = card.querySelector(".var-estoque");
           if (nomeInp) varsProduto[idx].nome = nomeInp.value;
           if (precoInp) varsProduto[idx].preco = precoInp.value === "" ? "" : parseFloat(precoInp.value);
-          if (estInp) varsProduto[idx].estoque = estInp.value === "" ? "" : parseInt(estInp.value, 10);
+
+          if (temTams) {
+            if (!varsProduto[idx].tamanhos) varsProduto[idx].tamanhos = {};
+            var tamInputs = card.querySelectorAll(".var-tam-input");
+            var sub = 0;
+            tamInputs.forEach(function (tin) {
+              var tm = tin.dataset.tam;
+              var qVal = tin.value === "" ? 0 : parseInt(tin.value, 10);
+              if (isNaN(qVal) || qVal < 0) qVal = 0;
+              varsProduto[idx].tamanhos[tm] = qVal;
+              sub += qVal;
+            });
+            varsProduto[idx].estoque = sub;
+          } else {
+            if (estInp) varsProduto[idx].estoque = estInp.value === "" ? "" : parseInt(estInp.value, 10);
+          }
         }
       });
     }
@@ -1438,15 +1575,41 @@
     function atualizarResumoVars() {
       var totEst = 0;
       var menorPreco = Infinity;
+      var tams = extrairTamanhosForm();
+      var totaisPorTam = {};
+      if (tams.length) {
+        tams.forEach(function (tm) { totaisPorTam[tm] = 0; });
+      }
+
       varsProduto.forEach(function (v) {
         var e = parseInt(v.estoque, 10) || 0;
         totEst += e;
         var p = parseFloat(v.preco);
         if (!isNaN(p) && p >= 0 && p < menorPreco) menorPreco = p;
+
+        if (tams.length && v.tamanhos) {
+          tams.forEach(function (tm) {
+            totaisPorTam[tm] += (parseInt(v.tamanhos[tm], 10) || 0);
+          });
+        }
       });
       if (menorPreco === Infinity) menorPreco = 0;
       if ($("vars-resumo-est")) $("vars-resumo-est").innerHTML = "Estoque total: <b>" + totEst + " un.</b>";
       if ($("vars-resumo-prc")) $("vars-resumo-prc").innerHTML = "Preço base: <b>" + br(menorPreco) + "</b>";
+
+      var tamsResumoEl = $("vars-resumo-tams");
+      if (tamsResumoEl) {
+        if (tams.length) {
+          tamsResumoEl.style.display = "block";
+          var txtGrade = tams.map(function (tm) {
+            return 'Tam <b>' + esc(tm) + '</b>: ' + (totaisPorTam[tm] || 0) + ' un';
+          }).join(' · ');
+          tamsResumoEl.innerHTML = 'Estoque por tamanho: ' + txtGrade;
+        } else {
+          tamsResumoEl.style.display = "none";
+          tamsResumoEl.innerHTML = "";
+        }
+      }
     }
 
     function renderVars() {
@@ -1458,9 +1621,13 @@
           imagem: "",
           nome: "Padrão",
           preco: "",
-          estoque: ""
+          estoque: "",
+          tamanhos: {}
         }];
       }
+
+      var tams = extrairTamanhosForm();
+      var temTamanhos = tams.length > 0;
 
       var h = "";
       varsProduto.forEach(function (v, idx) {
@@ -1468,6 +1635,56 @@
         var imgHtml = v.imagem
           ? '<img src="' + esc(v.imagem) + '" alt="">'
           : '<span class="var-no-img">sem foto</span>';
+
+        if (!v.tamanhos) v.tamanhos = {};
+
+        var subtotalTam = 0;
+        if (temTamanhos) {
+          tams.forEach(function (tm) {
+            subtotalTam += (parseInt(v.tamanhos[tm], 10) || 0);
+          });
+          v.estoque = subtotalTam;
+        }
+
+        var estoqueInputHtml = "";
+        if (temTamanhos) {
+          var tamGridHtml = tams.map(function (tm) {
+            var qVal = (v.tamanhos && v.tamanhos[tm] !== undefined) ? v.tamanhos[tm] : "";
+            return '<div class="var-tam-item">'
+                 + '  <span class="var-tam-label">' + esc(tm) + '</span>'
+                 + '  <input type="number" min="0" step="1" class="var-tam-input" data-var-idx="' + idx + '" data-tam="' + esc(tm) + '" value="' + qVal + '" placeholder="0">'
+                 + '</div>';
+          }).join("");
+
+          estoqueInputHtml = '<div class="var-grid-2">'
+            + '  <div>'
+            + '    <label>Preço (R$)</label>'
+            + '    <input type="number" step="0.01" min="0" class="var-preco" data-idx="' + idx + '" value="' + (v.preco !== undefined ? v.preco : '') + '" placeholder="0,00" required>'
+            + '  </div>'
+            + '  <div>'
+            + '    <label>Estoque total desta foto</label>'
+            + '    <input type="text" class="var-estoque-display" value="' + subtotalTam + ' un" readonly style="background:var(--tint);font-weight:700;color:var(--g);cursor:default">'
+            + '  </div>'
+            + '</div>'
+            + '<div class="var-tam-box">'
+            + '  <div class="var-tam-head">'
+            + '    <label>Quantidade por tamanho para esta foto:</label>'
+            + '    <span class="var-tam-subtotal">Subtotal: <b>' + subtotalTam + ' un</b></span>'
+            + '  </div>'
+            + '  <div class="var-tam-grid">' + tamGridHtml + '</div>'
+            + '</div>';
+        } else {
+          estoqueInputHtml = '<div class="var-grid-2">'
+            + '  <div>'
+            + '    <label>Preço (R$)</label>'
+            + '    <input type="number" step="0.01" min="0" class="var-preco" data-idx="' + idx + '" value="' + (v.preco !== undefined ? v.preco : '') + '" placeholder="0,00" required>'
+            + '  </div>'
+            + '  <div>'
+            + '    <label>Estoque (un)</label>'
+            + '    <input type="number" min="0" step="1" class="var-estoque" data-idx="' + idx + '" value="' + (v.estoque !== undefined ? v.estoque : '') + '" placeholder="0" required>'
+            + '  </div>'
+            + '</div>';
+        }
 
         h += '<div class="var-card" data-idx="' + idx + '">'
           + '  <div class="var-card-head">'
@@ -1487,19 +1704,10 @@
           + '    </div>'
           + '    <div class="var-fields">'
           + '      <div>'
-          + '        <label>Nome / Opção (opcional)</label>'
-          + '        <input type="text" class="var-nome" data-idx="' + idx + '" value="' + esc(v.nome || '') + '" placeholder="Ex: Verde, Preto, 900g, etc.">'
+          + '        <label>Cor / Nome da opção (opcional)</label>'
+          + '        <input type="text" class="var-nome" data-idx="' + idx + '" value="' + esc(v.nome || '') + '" placeholder="Ex: Azul, Verde, Rosa, etc.">'
           + '      </div>'
-          + '      <div class="var-grid-2">'
-          + '        <div>'
-          + '          <label>Preço (R$)</label>'
-          + '          <input type="number" step="0.01" min="0" class="var-preco" data-idx="' + idx + '" value="' + (v.preco !== undefined ? v.preco : '') + '" placeholder="0,00" required>'
-          + '        </div>'
-          + '        <div>'
-          + '          <label>Estoque (un)</label>'
-          + '          <input type="number" min="0" step="1" class="var-estoque" data-idx="' + idx + '" value="' + (v.estoque !== undefined ? v.estoque : '') + '" placeholder="0" required>'
-          + '        </div>'
-          + '      </div>'
+          +        estoqueInputHtml
           + '    </div>'
           + '  </div>'
           + '</div>';
@@ -1534,6 +1742,33 @@
 
     $("vars-list").addEventListener("input", function (e) {
       var t = e.target;
+      if (t.classList.contains("var-tam-input")) {
+        var varIdx = Number(t.dataset.varIdx);
+        var tam = t.dataset.tam;
+        if (varsProduto[varIdx]) {
+          if (!varsProduto[varIdx].tamanhos) varsProduto[varIdx].tamanhos = {};
+          var qVal = t.value === "" ? 0 : parseInt(t.value, 10);
+          if (isNaN(qVal) || qVal < 0) qVal = 0;
+          varsProduto[varIdx].tamanhos[tam] = qVal;
+
+          var tams = extrairTamanhosForm();
+          var sub = 0;
+          tams.forEach(function (tm) {
+            sub += (parseInt(varsProduto[varIdx].tamanhos[tm], 10) || 0);
+          });
+          varsProduto[varIdx].estoque = sub;
+
+          var card = t.closest(".var-card");
+          if (card) {
+            var subEl = card.querySelector(".var-tam-subtotal b");
+            if (subEl) subEl.textContent = sub + " un";
+            var dispEl = card.querySelector(".var-estoque-display");
+            if (dispEl) dispEl.value = sub + " un";
+          }
+        }
+        atualizarResumoVars();
+        return;
+      }
       var idx = Number(t.dataset.idx);
       if (isNaN(idx) || !varsProduto[idx]) return;
       if (t.classList.contains("var-nome")) varsProduto[idx].nome = t.value;
@@ -1541,6 +1776,13 @@
       if (t.classList.contains("var-estoque")) varsProduto[idx].estoque = t.value === "" ? "" : parseInt(t.value, 10);
       atualizarResumoVars();
     });
+
+    if ($("ta")) {
+      $("ta").addEventListener("input", function () {
+        salvarValoresAtuaisDosCampos();
+        renderVars();
+      });
+    }
 
     $("vars-list").addEventListener("change", function (e) {
       var fileInput = e.target;

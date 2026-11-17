@@ -641,7 +641,11 @@ function pedido(d) {
           itens.filter(function (it) { return it.id === id && (it.varId || it.varNome); }).forEach(function (it) {
             vars.forEach(function (v) {
               if ((it.varId && v.id === it.varId) || (it.varNome && v.nome === it.varNome)) {
-                v.estoque = Math.max(0, (parseInt(v.estoque, 10) || 0) - (parseInt(it.q, 10) || 0));
+                var qtdBaixa = parseInt(it.q, 10) || 0;
+                v.estoque = Math.max(0, (parseInt(v.estoque, 10) || 0) - qtdBaixa);
+                if (v.tamanhos && it.tam && v.tamanhos[it.tam] !== undefined) {
+                  v.tamanhos[it.tam] = Math.max(0, (parseInt(v.tamanhos[it.tam], 10) || 0) - qtdBaixa);
+                }
                 mudouVars = true;
               }
             });
