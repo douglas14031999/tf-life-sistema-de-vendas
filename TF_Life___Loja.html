@@ -2470,10 +2470,12 @@
       var infoCor = (legendaCor && legendaCor !== p.nome) ? ("\n🎨 Opção: " + legendaCor) : "";
       var desc = (p.descricao_completa || p.descricao || "").trim();
 
-      var urlBase = window.location.origin + window.location.pathname;
-      var linkDireto = urlBase + '?p=' + encodeURIComponent(p.id);
+      var hostUrl = (window.location.origin && window.location.origin.indexOf('http') === 0)
+        ? window.location.origin
+        : 'https://tflife.provacanoa.tech';
+      var linkDireto = hostUrl + '/p/' + encodeURIComponent(p.id) + '.html';
       if (modalFotoState.aberto && modalFotoState.curIdx > 0) {
-        linkDireto += '&foto=' + modalFotoState.curIdx;
+        linkDireto += '?foto=' + modalFotoState.curIdx;
       }
 
       var titulo = p.nome + " - TF Life";
