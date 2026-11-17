@@ -140,7 +140,8 @@ function tudo() {
     config: cfg(),
     usuarios: rd('Usuarios').filter(function (r) { return r.usuario; })
       .map(function (r) { return { usuario: r.usuario, nome: r.nome, ativo: bool(r.ativo) }; }),
-    cupons: cupons()
+    cupons: cupons(),
+    pedidos: pedidosList()
   };
 }
 function linhaLivre(s) {
@@ -170,8 +171,13 @@ function excluirArquivoDrive(url) {
 function salvarProduto(d) {
   var p = d.p || {}, s = SS.getSheetByName('Produtos');
   var nome = String(p.nome || '').trim(), preco = Number(p.preco), est = parseInt(p.estoque, 10);
+  var categoria = String(p.categoria || '').trim();
   if (!nome) return { ok: 0, erro: 'Informe o nome do produto.' };
-  if (!categorias().some(function (c) { return c.nome === p.categoria; })) return { ok: 0, erro: 'Escolha uma categoria válida.' };
+  if (!categoria) return { ok: 0, erro: 'Selecione a categoria do produto.' };
+  var cats = categorias();
+  var catValida = cats.filter(function (c) { return String(c.nome).trim().toLowerCase() === categoria.toLowerCase(); })[0];
+  if (!catValida) return { ok: 0, erro: 'Escolha uma categoria válida.' };
+  categoria = catValida.nome;
   if (!(preco >= 0)) return { ok: 0, erro: 'Preço inválido.' };
   if (!(est >= 0)) return { ok: 0, erro: 'Estoque inválido.' };
   var img = String(p.imagem || ''); if (img && !/^https:\/\//.test(img)) return { ok: 0, erro: 'Imagem inválida.' };
@@ -223,7 +229,7 @@ function salvarProduto(d) {
   }
 
   var linha = ex ? ex._row : linhaLivre(s);
-  var vals = [id, nome, p.categoria, p.descricao, p.descricao_completa, preco, est, p.etiqueta, !!p.ativo, img, p.cores, p.tamanhos, varsJson]
+  var vals = [id, nome, categoria, p.descricao, p.descricao_completa, preco, est, p.etiqueta, !!p.ativo, img, p.cores, p.tamanhos, varsJson]
     .map(function (v) { return safe(typeof v === 'string' ? v.trim() : v); });
   s.getRange(linha, 1, 1, PROD.length).setValues([vals]);
   limparCache();
@@ -337,6 +343,47 @@ function garantirAbaPedidos() {
     try { s.getRange('C:C').setNumberFormat('@'); } catch (x) {}
   }
   return s;
+}
+
+function pedidosList() {
+  var s = SS.getSheetByName('Pedidos');
+  if (!s) return [];
+  return rd('Pedidos').filter(function (r) { return r.id_pedido; }).map(function (p) {
+    return {
+      id: String(p.id_pedido),
+      data_hora: String(p.data_hora || ''),
+      telefone: String(p.telefone || ''),
+      nome: String(p.nome || ''),
+      endereco: String(p.endereco || ''),
+      forma_pagamento: String(p.forma_pagamento || ''),
+      itens: String(p.itens || ''),
+      total: Number(p.total) || 0,
+      status: String(p.status || 'Recebido')
+    };
+  }).reverse();
+}
+
+function atualizarStatusPedido(d) {
+  var id = String(d.id || '').trim();
+  var novoStatus = String(d.status || '').trim();
+  if (!id || !novoStatus) return { ok: 0, erro: 'Informe o ID e o novo status.' };
+  var s = SS.getSheetByName('Pedidos');
+  if (!s) return { ok: 0, erro: 'Aba Pedidos não encontrada.' };
+  var ex = rd('Pedidos').filter(function (r) { return String(r.id_pedido) === id; })[0];
+  if (!ex) return { ok: 0, erro: 'Pedido não encontrado.' };
+  s.getRange(ex._row, 9).setValue(safe(novoStatus));
+  return { ok: 1 };
+}
+
+function excluirPedido(d) {
+  var id = String(d.id || '').trim();
+  if (!id) return { ok: 0, erro: 'ID do pedido não informado.' };
+  var s = SS.getSheetByName('Pedidos');
+  if (!s) return { ok: 0, erro: 'Aba Pedidos não encontrada.' };
+  var ex = rd('Pedidos').filter(function (r) { return String(r.id_pedido) === id; })[0];
+  if (!ex) return { ok: 0, erro: 'Pedido não encontrado.' };
+  s.deleteRow(ex._row);
+  return { ok: 1 };
 }
 
 function buscarCliente(d) {
@@ -692,6 +739,9 @@ var ACOES = {
   salvarConfig: salvarConfig,
   imagem: imagem,
   pedido: pedido,
+  pedidos: pedidosList,
+  atualizarStatusPedido: atualizarStatusPedido,
+  excluirPedido: excluirPedido,
   buscarCliente: buscarCliente,
   validarCupom: validarCupom,
   salvarCupom: salvarCupom,

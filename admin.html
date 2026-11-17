@@ -720,6 +720,68 @@
         grid-template-columns: 1fr
       }
     }
+
+    /* Status de pedidos e badges */
+    .ped-st-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.3;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+    .ped-st-recebido {
+      background: #e0f2fe;
+      color: #0369a1;
+      border-color: #bae6fd;
+    }
+    .ped-st-preparo {
+      background: #fef3c7;
+      color: #b45309;
+      border-color: #fde68a;
+    }
+    .ped-st-pronto {
+      background: #f3e8ff;
+      color: #7e22ce;
+      border-color: #e9d5ff;
+    }
+    .ped-st-entregue {
+      background: #dcfce7;
+      color: #15803d;
+      border-color: #bbf7d0;
+    }
+    .ped-st-cancelado {
+      background: #fee2e2;
+      color: #b91c1c;
+      border-color: #fecaca;
+    }
+    @media (prefers-color-scheme: dark) {
+      .ped-st-recebido { background: #0c4a6e; color: #7dd3fc; border-color: #0369a1; }
+      .ped-st-preparo { background: #78350f; color: #fde68a; border-color: #b45309; }
+      .ped-st-pronto { background: #581c87; color: #d8b4fe; border-color: #7e22ce; }
+      .ped-st-entregue { background: #14532d; color: #86efac; border-color: #15803d; }
+      .ped-st-cancelado { background: #7f1d1d; color: #fca5a5; border-color: #b91c1c; }
+    }
+    .ped-st-select {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 5px 8px;
+      border-radius: 8px;
+      width: auto;
+      cursor: pointer;
+    }
+    .ped-card-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: var(--card);
+      border: 1px solid var(--bd);
+      border-radius: 8px;
+      font-size: 14px;
+    }
   </style>
 </head>
 
@@ -777,7 +839,8 @@
       </div>
     </header>
     <main class="w">
-      <div class="tabs" role="tablist"><button data-tab="pr" aria-pressed="true">Produtos</button><button data-tab="ca"
+      <div class="tabs" role="tablist"><button data-tab="pr" aria-pressed="true">Produtos</button><button data-tab="pd"
+          aria-pressed="false">Pedidos</button><button data-tab="ca"
           aria-pressed="false">Categorias</button><button data-tab="cp" aria-pressed="false">Cupons</button><button data-tab="us" aria-pressed="false">Usuários</button><button
           data-tab="cf" aria-pressed="false">Configurações</button></div>
 
@@ -804,6 +867,44 @@
             <tbody id="tb"></tbody>
           </table>
           <div class="em" id="em" hidden>Nenhum produto encontrado.</div>
+        </div>
+      </section>
+
+      <!-- PEDIDOS -->
+      <section id="t-pd" hidden>
+        <div class="st">
+          <div class="sc"><b id="ped-total">0</b><small>Total de pedidos</small></div>
+          <div class="sc"><b id="ped-faturamento">R$ 0,00</b><small>Faturamento total</small></div>
+          <div class="sc"><b id="ped-pendentes">0</b><small>Em andamento</small></div>
+        </div>
+        <div class="bar">
+          <input id="ped-q" placeholder="Buscar por ID, cliente, telefone ou item…" aria-label="Buscar pedidos">
+          <select id="ped-st" aria-label="Filtrar por status">
+            <option value="">Todos os status</option>
+            <option value="Recebido">Recebido</option>
+            <option value="Em preparo">Em preparo</option>
+            <option value="Pronto / Enviado">Pronto / Enviado</option>
+            <option value="Entregue">Entregue</option>
+            <option value="Cancelado">Cancelado</option>
+          </select>
+          <button class="btn o" id="btn-ped-refresh" type="button" title="Atualizar pedidos">🔄 Atualizar</button>
+        </div>
+        <div class="tb">
+          <table>
+            <thead>
+              <tr>
+                <th>Pedido / Data</th>
+                <th>Cliente</th>
+                <th>Endereço</th>
+                <th>Resumo dos itens</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="ped-tb"></tbody>
+          </table>
+          <div class="em" id="ped-em" hidden>Nenhum pedido encontrado.</div>
         </div>
       </section>
 
@@ -1006,6 +1107,81 @@
       <div class="ft"><button class="btn d" id="cpd" type="button">Excluir</button><button class="btn o" id="cpx" type="button">Cancelar</button><button class="btn" id="cps" type="button">Salvar cupom</button></div>
     </form>
   </div>
+
+  <!-- MODAL DETALHES DO PEDIDO -->
+  <div class="ov" id="m5">
+    <div class="md modal-fixed" id="ped-modal" style="max-width:680px">
+      <div class="md-head">
+        <div>
+          <h2 id="ped-det-id" style="font-size:20px">Detalhes do Pedido</h2>
+          <small id="ped-det-data" style="color:var(--mu);font-size:13px"></small>
+        </div>
+        <button class="md-close" id="ped-det-close" type="button" title="Fechar" aria-label="Fechar">&times;</button>
+      </div>
+      <div class="md-body" style="padding:20px">
+        <!-- Status Changer Banner -->
+        <div style="background:var(--tint);padding:14px 16px;border-radius:12px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+          <div>
+            <span style="font-size:12px;text-transform:uppercase;font-weight:700;color:var(--mu);display:block">Status do Pedido</span>
+            <span id="ped-det-status-badge" class="ped-st-badge ped-st-recebido">Recebido</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <label for="ped-det-status-sel" style="margin:0;font-size:13px">Alterar:</label>
+            <select id="ped-det-status-sel" style="width:auto;padding:6px 12px;font-size:14px;border-radius:8px">
+              <option value="Recebido">Recebido</option>
+              <option value="Em preparo">Em preparo</option>
+              <option value="Pronto / Enviado">Pronto / Enviado</option>
+              <option value="Entregue">Entregue</option>
+              <option value="Cancelado">Cancelado</option>
+            </select>
+            <button class="btn btn-sm" id="ped-det-status-save" type="button">Salvar</button>
+          </div>
+        </div>
+
+        <!-- Cliente & Contato -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:14px;margin-bottom:16px">
+          <div style="background:var(--bg);border:1px solid var(--bd);padding:14px;border-radius:12px">
+            <h3 style="margin:0 0 8px;font-size:13px;color:var(--mu);text-transform:uppercase">Dados do Cliente</h3>
+            <p style="margin:0 0 4px;font-size:16px;font-weight:700" id="ped-det-nome">-</p>
+            <p style="margin:0 0 10px;font-size:14px" id="ped-det-tel">-</p>
+            <a id="ped-det-zap-btn" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-sm" style="display:inline-flex;align-items:center;gap:6px;background:#25D366;color:#fff;text-decoration:none">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2z"/></svg>
+              Abrir no WhatsApp
+            </a>
+          </div>
+
+          <div style="background:var(--bg);border:1px solid var(--bd);padding:14px;border-radius:12px">
+            <h3 style="margin:0 0 8px;font-size:13px;color:var(--mu);text-transform:uppercase">Entrega & Pagamento</h3>
+            <div style="margin-bottom:8px">
+              <span style="font-size:12px;color:var(--mu)">Endereço:</span>
+              <p style="margin:2px 0 0;font-size:14px;font-weight:500" id="ped-det-end">-</p>
+            </div>
+            <div>
+              <span style="font-size:12px;color:var(--mu)">Forma de pagamento:</span>
+              <p style="margin:2px 0 0;font-size:14px;font-weight:700" id="ped-det-pag">-</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Itens do Pedido -->
+        <div style="background:var(--bg);border:1px solid var(--bd);padding:14px;border-radius:12px;margin-bottom:16px">
+          <h3 style="margin:0 0 10px;font-size:13px;color:var(--mu);text-transform:uppercase">Itens do Pedido</h3>
+          <div id="ped-det-itens-lista" style="display:flex;flex-direction:column;gap:8px"></div>
+          <div style="border-top:1px dashed var(--bd);margin-top:14px;padding-top:12px;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:16px;font-weight:700">Total do Pedido:</span>
+            <span id="ped-det-total" style="font-size:20px;font-weight:800;color:var(--g)">R$ 0,00</span>
+          </div>
+        </div>
+      </div>
+      <div class="md-foot" style="display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-top:1px solid var(--bd);background:var(--bg);flex-wrap:wrap;gap:10px">
+        <button class="btn d" id="ped-det-del" type="button">Excluir pedido</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn o" id="ped-det-copy" type="button">📋 Copiar resumo</button>
+          <button class="btn" id="ped-det-close-btn" type="button">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="tt" id="tt" role="status"></div>
 
   <script>
@@ -1015,7 +1191,7 @@
     var $ = function (i) { return document.getElementById(i) };
     var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] }) };
     var br = function (v) { return "R$ " + Number(v || 0).toFixed(2).replace(".", ",") };
-    var S = { produtos: [], categorias: [], usuarios: [], cupons: [], config: {} }, TOKEN = "", NOME = "", edit = null, editC = null, editU = null, editCp = null;
+    var S = { produtos: [], categorias: [], usuarios: [], cupons: [], pedidos: [], config: {} }, TOKEN = "", NOME = "", edit = null, editC = null, editU = null, editCp = null, editPed = null;
     try { TOKEN = sessionStorage.getItem("tf_t") || ""; NOME = sessionStorage.getItem("tf_n") || "" } catch (e) { }
 
     function toast(t) { var e = $("tt"); e.textContent = t; e.style.display = "block"; clearTimeout(toast.h); toast.h = setTimeout(function () { e.style.display = "none" }, 2600) }
@@ -1089,7 +1265,7 @@
           var d = JSON.parse(c);
           if (d && d.produtos) {
             S = d; S.config = S.config || {};
-            preencherCats(); drawP(); drawC(); drawU(); drawCp();
+            preencherCats(); drawP(); drawPed(); drawC(); drawU(); drawCp();
             if (S.config.whatsapp) $("cw").value = S.config.whatsapp;
             if (S.config.faixa) $("cx").value = String(S.config.faixa).split("|").join("\n");
           }
@@ -1101,22 +1277,33 @@
         if (!r.ok) { if (!r.sessao && !r.trocar) toast(r.erro || "Erro ao carregar."); return; }
         S = r; S.config = r.config || {};
         salvarCacheLocal();
-        preencherCats(); drawP(); drawC(); drawU(); drawCp();
+        preencherCats(); drawP(); drawPed(); drawC(); drawU(); drawCp();
         $("cw").value = S.config.whatsapp || "";
         $("cx").value = String(S.config.faixa || "").split("|").join("\n");
       });
     }
     function preencherCats() {
       var n = S.categorias.map(function (c) { return c.nome });
-      var v = $("fc").value; $("fc").innerHTML = "<option value=''>Todas as categorias</option>" + n.map(function (c) { return "<option>" + esc(c) + "</option>" }).join(""); $("fc").value = n.indexOf(v) > -1 ? v : "";
-      $("c").innerHTML = n.map(function (c) { return "<option>" + esc(c) + "</option>" }).join("")
+      var v = $("fc").value;
+      $("fc").innerHTML = "<option value=''>Todas as categorias</option>" + n.map(function (c) { return "<option value='" + esc(c) + "'>" + esc(c) + "</option>" }).join("");
+      $("fc").value = n.indexOf(v) > -1 ? v : "";
+
+      // Preservar a categoria atualmente selecionada no modal para nunca resetar sozinho
+      var curC = $("c").value;
+      var cHtml = "<option value='' disabled" + (!curC ? " selected" : "") + ">Selecione a categoria</option>" +
+        n.map(function (c) { return "<option value='" + esc(c) + "'>" + esc(c) + "</option>" }).join("");
+      $("c").innerHTML = cHtml;
+      if (curC && n.indexOf(curC) > -1) {
+        $("c").value = curC;
+      }
     }
 
     /* ---------- abas ---------- */
     document.querySelector(".tabs").onclick = function (e) {
       var b = e.target.closest("button"); if (!b) return;
       [].forEach.call(document.querySelectorAll(".tabs button"), function (x) { x.setAttribute("aria-pressed", x == b) });
-      ["pr", "ca", "us", "cf", "cp"].forEach(function (t) { $("t-" + t).hidden = t != b.dataset.tab })
+      ["pr", "pd", "ca", "us", "cf", "cp"].forEach(function (t) { $("t-" + t).hidden = t != b.dataset.tab });
+      if (b.dataset.tab === "pd") drawPed();
     };
 
     /* ---------- produtos ---------- */
@@ -1356,7 +1543,13 @@
       atualizarStatusBotaoSalvar();
 
       $("n").value = p ? p.nome : "";
-      $("c").value = p ? p.categoria : (S.categorias[0] || {}).nome;
+      var catEscolhida = "";
+      if (p && p.categoria) {
+        catEscolhida = p.categoria;
+      } else if ($("fc") && $("fc").value) {
+        catEscolhida = $("fc").value;
+      }
+      $("c").value = catEscolhida;
       $("t").value = p ? (p.etiqueta || "") : "";
       $("d").value = p ? (p.descricao || "") : "";
       $("dc").value = p ? (p.descricao_completa || "") : "";
@@ -1384,6 +1577,8 @@
     $("sv").onclick = function () {
       var b = $("sv"), n = $("n").value.trim();
       if (!n) { $("me").textContent = "Informe o nome do produto."; return; }
+      var cat = $("c").value.trim();
+      if (!cat) { $("me").textContent = "Selecione a categoria do produto."; return; }
       salvarValoresAtuaisDosCampos();
 
       if (!varsProduto || !varsProduto.length) {
@@ -1416,7 +1611,7 @@
       var p = {
         id: edit ? edit.id : "",
         nome: n,
-        categoria: $("c").value,
+        categoria: cat,
         preco: precoPrincipal,
         estoque: totEstoque,
         etiqueta: $("t").value,
@@ -1462,6 +1657,221 @@
         S.produtos = S.produtos.filter(function (x) { return x.id != id; });
         salvarCacheLocal();
         drawP();
+      });
+    };
+
+    /* ---------- pedidos ---------- */
+    function classStatus(st) {
+      if (st === "Em preparo") return "ped-st-preparo";
+      if (st === "Pronto / Enviado") return "ped-st-pronto";
+      if (st === "Entregue") return "ped-st-entregue";
+      if (st === "Cancelado") return "ped-st-cancelado";
+      return "ped-st-recebido";
+    }
+
+    function drawPed() {
+      var q = ($("ped-q").value || "").toLowerCase().trim();
+      var stFilter = $("ped-st").value;
+      var L = S.pedidos || [];
+
+      var filtrados = L.filter(function (p) {
+        if (stFilter && p.status !== stFilter) return false;
+        if (!q) return true;
+        var hay = (p.id + " " + p.nome + " " + p.telefone + " " + p.endereco + " " + p.itens + " " + p.forma_pagamento).toLowerCase();
+        return hay.indexOf(q) > -1;
+      });
+
+      var totalCount = L.length;
+      var faturamento = L.reduce(function (acc, p) {
+        return p.status !== "Cancelado" ? acc + (Number(p.total) || 0) : acc;
+      }, 0);
+      var pendentes = L.filter(function (p) {
+        return p.status === "Recebido" || p.status === "Em preparo" || p.status === "Pronto / Enviado";
+      }).length;
+
+      $("ped-total").textContent = totalCount;
+      $("ped-faturamento").textContent = br(faturamento);
+      $("ped-pendentes").textContent = pendentes;
+
+      $("ped-tb").innerHTML = filtrados.map(function (p) {
+        var stClass = classStatus(p.status);
+        var telDigits = (p.telefone || "").replace(/\D/g, "");
+        var zapUrl = telDigits ? "https://wa.me/55" + telDigits : "#";
+        var itensPreview = esc(p.itens || "").replace(/; /g, "<br>");
+
+        return '<tr>' +
+          '<td><strong>' + esc(p.id) + '</strong><br><small style="color:var(--mu)">' + esc(p.data_hora || '') + '</small></td>' +
+          '<td><strong>' + esc(p.nome || "Não informado") + '</strong><br>' +
+            (telDigits ? '<a href="' + zapUrl + '" target="_blank" rel="noopener noreferrer" style="color:#25D366;font-weight:700;font-size:13px;text-decoration:none;display:inline-flex;align-items:center;gap:4px">📱 ' + esc(p.telefone) + '</a>' : '<small style="color:var(--mu)">Sem telefone</small>') +
+          '</td>' +
+          '<td style="max-width:180px"><small style="display:block;white-space:normal;line-height:1.3">' + esc(p.endereco || "Não informado") + '</small></td>' +
+          '<td style="max-width:220px;font-size:13px"><div style="max-height:70px;overflow-y:auto;line-height:1.3">' + itensPreview + '</div></td>' +
+          '<td><b style="color:var(--g);font-size:15px">' + br(p.total) + '</b><br><small class="pill" style="padding:1px 8px;font-size:11px">' + esc(p.forma_pagamento || "Não informada") + '</small></td>' +
+          '<td>' +
+            '<select class="ped-st-select ' + stClass + '" data-ped-id="' + esc(p.id) + '">' +
+              '<option value="Recebido"' + (p.status === "Recebido" ? " selected" : "") + '>Recebido</option>' +
+              '<option value="Em preparo"' + (p.status === "Em preparo" ? " selected" : "") + '>Em preparo</option>' +
+              '<option value="Pronto / Enviado"' + (p.status === "Pronto / Enviado" ? " selected" : "") + '>Pronto / Enviado</option>' +
+              '<option value="Entregue"' + (p.status === "Entregue" ? " selected" : "") + '>Entregue</option>' +
+              '<option value="Cancelado"' + (p.status === "Cancelado" ? " selected" : "") + '>Cancelado</option>' +
+            '</select>' +
+          '</td>' +
+          '<td class="ac"><button class="btn o btn-sm" data-ped-ver="' + esc(p.id) + '">Detalhes</button></td>' +
+        '</tr>';
+      }).join("");
+
+      $("ped-em").hidden = filtrados.length > 0;
+    }
+
+    $("ped-q").oninput = $("ped-st").onchange = drawPed;
+    $("btn-ped-refresh").onclick = function () {
+      var b = $("btn-ped-refresh");
+      b.disabled = true; b.textContent = "Carregando…";
+      api("tudo").then(function (r) {
+        b.disabled = false; b.textContent = "🔄 Atualizar";
+        if (r && r.ok) {
+          S = r; S.config = r.config || {};
+          salvarCacheLocal();
+          drawPed();
+          toast("Lista de pedidos atualizada.");
+        } else {
+          toast(r.erro || "Erro ao atualizar.");
+        }
+      });
+    };
+
+    $("ped-tb").onchange = function (e) {
+      var sel = e.target.closest(".ped-st-select");
+      if (!sel) return;
+      var pedId = sel.dataset.pedId;
+      var novoSt = sel.value;
+      atualizarStatus(pedId, novoSt, sel);
+    };
+
+    $("ped-tb").onclick = function (e) {
+      var btn = e.target.closest("[data-ped-ver]");
+      if (!btn) return;
+      var id = btn.dataset.pedVer;
+      var p = (S.pedidos || []).filter(function (x) { return x.id === id; })[0];
+      if (p) abrirPed(p);
+    };
+
+    function atualizarStatus(pedId, novoStatus, elem) {
+      if (elem) elem.disabled = true;
+      api("atualizarStatusPedido", { id: pedId, status: novoStatus }).then(function (r) {
+        if (elem) elem.disabled = false;
+        if (!r.ok) {
+          toast(r.erro || "Erro ao atualizar status.");
+          drawPed();
+          return;
+        }
+        toast("Status atualizado para “" + novoStatus + "”.");
+        if (S.pedidos) {
+          for (var i = 0; i < S.pedidos.length; i++) {
+            if (S.pedidos[i].id === pedId) { S.pedidos[i].status = novoStatus; break; }
+          }
+          salvarCacheLocal();
+          drawPed();
+        }
+        if (editPed && editPed.id === pedId) {
+          editPed.status = novoStatus;
+          atualizarBadgeModal(novoStatus);
+        }
+      });
+    }
+
+    function atualizarBadgeModal(st) {
+      var badge = $("ped-det-status-badge");
+      badge.textContent = st;
+      badge.className = "ped-st-badge " + classStatus(st);
+    }
+
+    function abrirPed(p) {
+      editPed = p;
+      if (!p) return;
+      $("ped-det-id").textContent = "Pedido #" + p.id;
+      $("ped-det-data").textContent = p.data_hora ? ("Data: " + p.data_hora) : "";
+      $("ped-det-nome").textContent = p.nome || "Não informado";
+      $("ped-det-tel").textContent = p.telefone || "Não informado";
+
+      var telDigits = (p.telefone || "").replace(/\D/g, "");
+      var zapBtn = $("ped-det-zap-btn");
+      if (telDigits) {
+        var txtMsg = encodeURIComponent("Olá, " + (p.nome || "cliente") + "! Entramos em contato da TF Life sobre o seu pedido #" + p.id + ".");
+        zapBtn.href = "https://wa.me/55" + telDigits + "?text=" + txtMsg;
+        zapBtn.style.display = "inline-flex";
+      } else {
+        zapBtn.style.display = "none";
+      }
+
+      $("ped-det-end").textContent = p.endereco || "Não informado";
+      $("ped-det-pag").textContent = p.forma_pagamento || "Não informada";
+      $("ped-det-total").textContent = br(p.total);
+
+      atualizarBadgeModal(p.status || "Recebido");
+      $("ped-det-status-sel").value = p.status || "Recebido";
+
+      var listaDiv = $("ped-det-itens-lista");
+      listaDiv.innerHTML = "";
+      var itensArr = (p.itens || "").split("; ").filter(Boolean);
+      if (!itensArr.length) {
+        listaDiv.innerHTML = "<p style='color:var(--mu);margin:0;font-size:14px'>Nenhum item registrado.</p>";
+      } else {
+        itensArr.forEach(function (itStr) {
+          var div = document.createElement("div");
+          div.className = "ped-card-item";
+          if (itStr.indexOf("[CUPOM:") > -1) {
+            div.style.background = "var(--tint)";
+            div.innerHTML = "<span style='font-weight:700;color:var(--g)'>🏷️ " + esc(itStr) + "</span>";
+          } else {
+            div.innerHTML = "<span>" + esc(itStr) + "</span>";
+          }
+          listaDiv.appendChild(div);
+        });
+      }
+      modal("m5", true);
+    }
+
+    $("ped-det-close").onclick = $("ped-det-close-btn").onclick = function () { modal("m5", false); };
+    $("ped-det-status-save").onclick = function () {
+      if (!editPed) return;
+      var novoSt = $("ped-det-status-sel").value;
+      atualizarStatus(editPed.id, novoSt, $("ped-det-status-save"));
+    };
+
+    $("ped-det-copy").onclick = function () {
+      if (!editPed) return;
+      var txt = "📦 PEDIDO TF LIFE #" + editPed.id + "\n" +
+                "📅 Data: " + (editPed.data_hora || "-") + "\n" +
+                "👤 Cliente: " + (editPed.nome || "-") + "\n" +
+                "📱 Telefone: " + (editPed.telefone || "-") + "\n" +
+                "📍 Endereço: " + (editPed.endereco || "-") + "\n" +
+                "💳 Pagamento: " + (editPed.forma_pagamento || "-") + "\n" +
+                "📊 Status: " + (editPed.status || "-") + "\n\n" +
+                "🛒 ITENS:\n" +
+                (editPed.itens ? editPed.itens.split("; ").map(function (it) { return "• " + it; }).join("\n") : "• -") + "\n\n" +
+                "💰 TOTAL: " + br(editPed.total);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(txt).then(function () {
+          toast("Resumo copiado para a área de transferência!");
+        });
+      } else {
+        toast("Copiado!");
+      }
+    };
+
+    $("ped-det-del").onclick = function () {
+      if (!editPed || !confirm("Excluir o pedido #" + editPed.id + "? Esta ação removerá o registro do histórico.")) return;
+      var id = editPed.id;
+      busy($("ped-det-del"), true, "Excluir pedido");
+      api("excluirPedido", { id: id }).then(function (r) {
+        busy($("ped-det-del"), false, "Excluir pedido");
+        if (!r.ok) { toast(r.erro || "Erro ao excluir."); return; }
+        modal("m5", false);
+        toast("Pedido excluído.");
+        S.pedidos = (S.pedidos || []).filter(function (x) { return x.id !== id; });
+        salvarCacheLocal();
+        drawPed();
       });
     };
 
@@ -1666,13 +2076,16 @@
       })
     };
 
-    document.addEventListener("keydown", function (e) { if (e.key == "Escape") ["m1", "m2", "m3", "m4"].forEach(function (m) { modal(m, false) }) });
+    document.addEventListener("keydown", function (e) { if (e.key == "Escape") ["m1", "m2", "m3", "m4", "m5"].forEach(function (m) { modal(m, false) }) });
     if (TOKEN) iniciar(); else telaLogin();
     setInterval(function () {
       if (!document.hidden && TOKEN && $("app") && !$("app").hidden) {
+        // Se houver qualquer modal aberto, não re-renderizar para não atrapalhar o preenchimento do formulário
+        if (document.querySelector(".ov.on")) return;
         api("tudo").then(function (r) {
           if (r && r.ok) {
-            S = r; S.config = r.config || {}; preencherCats(); drawP(); drawC(); drawU();
+            S = r; S.config = r.config || {};
+            preencherCats(); drawP(); drawPed(); drawC(); drawU(); drawCp();
           }
         });
       }
