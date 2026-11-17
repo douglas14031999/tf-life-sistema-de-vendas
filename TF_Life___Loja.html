@@ -377,7 +377,27 @@
       border-radius: 20px;
       overflow: hidden;
       display: flex;
-      flex-direction: column
+      flex-direction: column;
+      cursor: pointer;
+      transition: border-color .22s ease, box-shadow .22s ease, transform .22s ease;
+    }
+
+    .card:hover {
+      border-color: rgba(30, 77, 53, 0.45);
+      box-shadow: 0 8px 24px rgba(30, 77, 53, 0.08);
+      transform: translateY(-2px);
+    }
+
+    @media(prefers-color-scheme:dark) {
+      :root:not([data-theme="light"]) .card:hover {
+        border-color: rgba(157, 200, 63, 0.45);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      }
+    }
+
+    :root[data-theme="dark"] .card:hover {
+      border-color: rgba(157, 200, 63, 0.45);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
     }
 
     .pic {
@@ -386,13 +406,18 @@
       display: grid;
       place-items: center;
       position: relative;
-      overflow: hidden
+      overflow: hidden;
     }
 
     .pic img {
       width: 100%;
       height: 100%;
-      object-fit: cover
+      object-fit: cover;
+      transition: transform .3s ease;
+    }
+
+    .card:hover .pic img {
+      transform: scale(1.03);
     }
 
     .pic svg {
@@ -1134,6 +1159,360 @@
       color: #b71c1c;
     }
 
+    /* ===== MODAL DE VISUALIZAÇÃO DE FOTOS ===== */
+    .modal-foto-ov {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 20, 15, 0.72);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s ease;
+    }
+
+    .modal-foto-ov.on {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-foto-dialog {
+      background: var(--card);
+      border: 1px solid var(--bd);
+      border-radius: 24px;
+      width: min(580px, 100%);
+      max-height: 92vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+      overflow: hidden;
+      transform: scale(0.96) translateY(8px);
+      transition: transform .25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .modal-foto-ov.on .modal-foto-dialog {
+      transform: scale(1) translateY(0);
+    }
+
+    .modal-foto-header {
+      padding: 18px 20px 14px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--bd);
+    }
+
+    .modal-foto-titles {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .modal-foto-titles small {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--g);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    @media(prefers-color-scheme:dark) {
+      .modal-foto-titles small {
+        color: var(--l);
+      }
+    }
+
+    .modal-foto-titles h3 {
+      font-size: 20px;
+      color: var(--tx);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .modal-foto-close {
+      background: transparent;
+      border: 0;
+      font-size: 28px;
+      line-height: 1;
+      color: var(--mu);
+      padding: 2px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background .15s, color .15s;
+    }
+
+    .modal-foto-close:hover {
+      background: var(--tint);
+      color: var(--tx);
+    }
+
+    .modal-foto-stage-wrap {
+      position: relative;
+      background: var(--tint);
+      width: 100%;
+      height: 380px;
+      max-height: 48vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .modal-foto-stage {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-foto-stage img {
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      display: block;
+      transition: opacity .2s ease;
+    }
+
+    .modal-foto-stage svg {
+      width: 120px;
+      height: 120px;
+      stroke: var(--g);
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0.85;
+    }
+
+    @media(prefers-color-scheme:dark) {
+      .modal-foto-stage svg {
+        stroke: var(--l);
+      }
+    }
+
+    .modal-foto-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      background: rgba(255, 255, 255, 0.92);
+      color: var(--g);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform .18s, background .18s, box-shadow .18s;
+      z-index: 2;
+    }
+
+    .modal-foto-nav:hover {
+      background: #ffffff;
+      transform: translateY(-50%) scale(1.08);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+    }
+
+    .modal-foto-nav.prev {
+      left: 14px;
+    }
+
+    .modal-foto-nav.next {
+      right: 14px;
+    }
+
+    .modal-foto-nav svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    @media(prefers-color-scheme:dark) {
+      .modal-foto-nav {
+        background: rgba(26, 44, 35, 0.92);
+        color: var(--l);
+        border-color: var(--bd);
+      }
+      .modal-foto-nav:hover {
+        background: #243d30;
+      }
+    }
+
+    .modal-foto-counter {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: rgba(18, 32, 26, 0.72);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 11px;
+      border-radius: 99px;
+      letter-spacing: .5px;
+      backdrop-filter: blur(4px);
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .modal-foto-info {
+      padding: 14px 20px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      border-bottom: 1px solid var(--bd);
+    }
+
+    .modal-foto-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .modal-foto-legenda {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--tx);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .modal-foto-preco {
+      font-size: 16px;
+      font-weight: 900;
+      color: var(--g);
+      white-space: nowrap;
+    }
+
+    @media(prefers-color-scheme:dark) {
+      .modal-foto-preco {
+        color: var(--l);
+      }
+    }
+
+    .modal-foto-thumbs {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .modal-foto-thumb {
+      flex: 0 0 54px;
+      height: 54px;
+      border-radius: 10px;
+      border: 2px solid transparent;
+      padding: 0;
+      background: var(--tint);
+      cursor: pointer;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color .18s, transform .18s, opacity .18s;
+      opacity: 0.65;
+    }
+
+    .modal-foto-thumb:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+    }
+
+    .modal-foto-thumb.on {
+      border-color: var(--g);
+      opacity: 1;
+      box-shadow: 0 0 0 2px rgba(30, 77, 53, 0.2);
+    }
+
+    @media(prefers-color-scheme:dark) {
+      .modal-foto-thumb.on {
+        border-color: var(--l);
+        box-shadow: 0 0 0 2px rgba(157, 200, 63, 0.25);
+      }
+    }
+
+    .modal-foto-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .modal-foto-thumb svg {
+      width: 28px;
+      height: 28px;
+      stroke: var(--g);
+      fill: none;
+      stroke-width: 2;
+    }
+
+    @media(prefers-color-scheme:dark) {
+      .modal-foto-thumb svg {
+        stroke: var(--l);
+      }
+    }
+
+    .modal-foto-footer {
+      padding: 12px 20px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      background: var(--card);
+    }
+
+    .modal-foto-btn-fechar {
+      background: transparent;
+      border: 1px solid var(--bd);
+      border-radius: 99px;
+      padding: 9px 20px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--mu);
+      cursor: pointer;
+      transition: background .18s, color .18s;
+    }
+
+    .modal-foto-btn-fechar:hover {
+      background: var(--tint);
+      color: var(--tx);
+    }
+
+    .modal-foto-btn-comprar {
+      background: var(--g);
+      border: 0;
+      border-radius: 99px;
+      padding: 10px 24px;
+      font-size: 14px;
+      font-weight: 900;
+      color: #fff;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(30, 77, 53, 0.28);
+      transition: background .18s, transform .18s;
+    }
+
+    .modal-foto-btn-comprar:hover {
+      background: #163a28;
+      transform: translateY(-1px);
+    }
+
   </style>
 </head>
 
@@ -1262,6 +1641,49 @@
       </div>
     </div>
   </aside>
+
+  <!-- Modal de Visualização de Fotos do Produto -->
+  <div class="modal-foto-ov" id="modal-foto-ov" role="dialog" aria-modal="true" aria-labelledby="modal-foto-title" style="display:none">
+    <div class="modal-foto-dialog">
+      <div class="modal-foto-header">
+        <div class="modal-foto-titles">
+          <small id="modal-foto-cat"></small>
+          <h3 id="modal-foto-title"></h3>
+        </div>
+        <button type="button" class="modal-foto-close" id="modal-foto-close" aria-label="Fechar visualização">×</button>
+      </div>
+
+      <div class="modal-foto-stage-wrap">
+        <div class="modal-foto-stage" id="modal-foto-stage"></div>
+
+        <button type="button" class="modal-foto-nav prev" id="modal-foto-prev" aria-label="Foto anterior">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+        <button type="button" class="modal-foto-nav next" id="modal-foto-next" aria-label="Próxima foto">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+
+        <div class="modal-foto-counter" id="modal-foto-counter"></div>
+      </div>
+
+      <div class="modal-foto-info" id="modal-foto-info">
+        <div class="modal-foto-meta">
+          <span class="modal-foto-legenda" id="modal-foto-legenda"></span>
+          <strong class="modal-foto-preco" id="modal-foto-preco"></strong>
+        </div>
+        <div class="modal-foto-thumbs" id="modal-foto-thumbs"></div>
+      </div>
+
+      <div class="modal-foto-footer">
+        <button type="button" class="modal-foto-btn-fechar" id="modal-foto-btn-fechar">Fechar</button>
+        <button type="button" class="modal-foto-btn-comprar" id="modal-foto-btn-comprar">Comprar produto</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     /* Cole aqui a URL /exec gerada na implantação do Apps Script.
@@ -1410,7 +1832,7 @@
         var varBadge = (p.variacoes && p.variacoes.length > 1)
           ? ' <span style="font-size:11px;color:var(--mu)">(' + p.variacoes.length + ' fotos)</span>'
           : '';
-        return '<article class="card"><div class="pic">' + (p.etiqueta ? '<span class="tag">' + esc(p.etiqueta) + '</span>' : '') + foto(p) + '</div><div class="cb"><small>' + esc(p.categoria) + '</small><h3>' + esc(p.nome) + '</h3><small>' + esc(p.descricao) + varBadge + '</small><div class="pr"><strong>' + precoTxt + '</strong><button class="add" data-i="' + esc(p.id) + '"' + (esg ? ' disabled' : '') + '>' + (esg ? 'Esgotado' : 'Adicionar') + '</button></div></div></article>'
+        return '<article class="card" data-card-prod="' + esc(p.id) + '"><div class="pic">' + (p.etiqueta ? '<span class="tag">' + esc(p.etiqueta) + '</span>' : '') + foto(p) + '</div><div class="cb"><small>' + esc(p.categoria) + '</small><h3>' + esc(p.nome) + '</h3><small>' + esc(p.descricao) + varBadge + '</small><div class="pr"><strong>' + precoTxt + '</strong><button class="add" data-i="' + esc(p.id) + '"' + (esg ? ' disabled' : '') + '>' + (esg ? 'Esgotado' : 'Adicionar') + '</button></div></div></article>'
       }).join("")
         : '<p class="mu">Nenhum produto nesta categoria ainda.</p>';
     }
@@ -1584,8 +2006,166 @@
       $("df").style.display = n ? "block" : "none";
     }
 
+    /* ---------- modal de fotos do produto ---------- */
+    var modalFotoState = {
+      p: null,
+      fotos: [],
+      curIdx: 0,
+      aberto: false
+    };
+
+    function extrairFotosProduto(p) {
+      var fotos = [];
+      var vistos = {};
+
+      function addFoto(url, legenda, preco, varIdx) {
+        if (!url) return;
+        var trimUrl = String(url).trim();
+        if (!trimUrl || vistos[trimUrl]) return;
+        vistos[trimUrl] = true;
+        fotos.push({
+          url: trimUrl,
+          legenda: legenda || p.nome,
+          preco: preco != null ? preco : p.preco,
+          varIdx: varIdx
+        });
+      }
+
+      if (p.imagem) {
+        addFoto(p.imagem, p.nome, p.preco, 0);
+      }
+
+      if (p.variacoes && Array.isArray(p.variacoes)) {
+        p.variacoes.forEach(function (v, idx) {
+          if (v && v.imagem) {
+            var leg = v.nome ? (p.nome + ' · ' + v.nome) : p.nome;
+            addFoto(v.imagem, leg, v.preco != null ? v.preco : p.preco, idx);
+          }
+        });
+      }
+
+      if (!fotos.length) {
+        fotos.push({
+          url: null,
+          legenda: p.nome,
+          preco: p.preco,
+          varIdx: 0
+        });
+      }
+
+      return fotos;
+    }
+
+    function abrirModalFotos(id) {
+      var p = prod(id);
+      if (!p) return;
+      var fotos = extrairFotosProduto(p);
+      modalFotoState = {
+        p: p,
+        fotos: fotos,
+        curIdx: 0,
+        aberto: true
+      };
+
+      $("modal-foto-cat").textContent = p.categoria || "Produto";
+      $("modal-foto-title").textContent = p.nome || "";
+      $("modal-foto-title").title = p.nome || "";
+
+      renderFotoModalAtual();
+
+      var ov = $("modal-foto-ov");
+      ov.style.display = "flex";
+      ov.offsetHeight;
+      ov.classList.add("on");
+      document.body.style.overflow = "hidden";
+    }
+
+    function fecharModalFotos() {
+      var ov = $("modal-foto-ov");
+      if (!ov || !modalFotoState.aberto) return;
+      ov.classList.remove("on");
+      modalFotoState.aberto = false;
+      document.body.style.overflow = "";
+      setTimeout(function () {
+        if (!modalFotoState.aberto) ov.style.display = "none";
+      }, 250);
+    }
+
+    function mudarFotoModal(delta) {
+      if (!modalFotoState.fotos || modalFotoState.fotos.length <= 1) return;
+      var total = modalFotoState.fotos.length;
+      var novoIdx = (modalFotoState.curIdx + delta + total) % total;
+      modalFotoState.curIdx = novoIdx;
+      renderFotoModalAtual();
+    }
+
+    function irParaFotoModal(idx) {
+      if (idx < 0 || idx >= modalFotoState.fotos.length) return;
+      modalFotoState.curIdx = idx;
+      renderFotoModalAtual();
+    }
+
+    function renderFotoModalAtual() {
+      var s = modalFotoState;
+      var p = s.p;
+      var foto = s.fotos[s.curIdx];
+      var total = s.fotos.length;
+
+      var stage = $("modal-foto-stage");
+      if (foto.url) {
+        stage.innerHTML = '<img src="' + esc(foto.url) + '" alt="' + esc(foto.legenda) + '" loading="eager">';
+      } else {
+        stage.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + icone(p.categoria) + '</svg>';
+      }
+
+      var prevBtn = $("modal-foto-prev");
+      var nextBtn = $("modal-foto-next");
+      var counter = $("modal-foto-counter");
+      var thumbsBox = $("modal-foto-thumbs");
+
+      if (total > 1) {
+        prevBtn.style.display = "flex";
+        nextBtn.style.display = "flex";
+        counter.style.display = "block";
+        counter.textContent = (s.curIdx + 1) + " / " + total;
+
+        thumbsBox.style.display = "flex";
+        thumbsBox.innerHTML = s.fotos.map(function (f, i) {
+          var isAtivo = (i === s.curIdx);
+          var inner = f.url
+            ? '<img src="' + esc(f.url) + '" alt="">'
+            : '<svg viewBox="0 0 24 24">' + icone(p.categoria) + '</svg>';
+          return '<button type="button" class="modal-foto-thumb' + (isAtivo ? ' on' : '') + '" data-foto-idx="' + i + '" title="Foto ' + (i + 1) + '">' + inner + '</button>';
+        }).join("");
+      } else {
+        prevBtn.style.display = "none";
+        nextBtn.style.display = "none";
+        counter.style.display = "none";
+        thumbsBox.style.display = "none";
+        thumbsBox.innerHTML = "";
+      }
+
+      $("modal-foto-legenda").textContent = foto.legenda || p.nome;
+      $("modal-foto-preco").textContent = br(foto.preco != null ? foto.preco : p.preco);
+    }
+
     /* ---------- eventos ---------- */
     document.addEventListener("click", function (e) {
+      // 1. Clique em miniatura no modal de fotos
+      var thumbBtn = e.target.closest(".modal-foto-thumb");
+      if (thumbBtn && thumbBtn.dataset.fotoIdx !== undefined) {
+        irParaFotoModal(Number(thumbBtn.dataset.fotoIdx));
+        return;
+      }
+
+      // 2. Clique em card de produto para abrir visualizador de fotos (se não for no botão Adicionar)
+      var cardEl = e.target.closest(".card");
+      if (cardEl && cardEl.dataset.cardProd && !e.target.closest("button.add")) {
+        abrirModalFotos(cardEl.dataset.cardProd);
+        return;
+      }
+
+      // 3. Demais botões normais
       var b = e.target.closest("button"); if (!b) return; var d = b.dataset;
       if (d.c) { cur = d.c; chips(); grid() }
       if (d.i) abrirProduto(d.i);
@@ -1618,7 +2198,59 @@
     $("bk").onclick = function () { painel(false) };
     $("oc").onclick = function () { vista(2); painel(true) };
     $("c1").onclick = $("c2").onclick = $("ov").onclick = function () { painel(false) };
-    document.addEventListener("keydown", function (e) { if (e.key == "Escape") painel(false) });
+
+    $("modal-foto-close").onclick = fecharModalFotos;
+    $("modal-foto-btn-fechar").onclick = fecharModalFotos;
+    $("modal-foto-prev").onclick = function (e) { e.stopPropagation(); mudarFotoModal(-1); };
+    $("modal-foto-next").onclick = function (e) { e.stopPropagation(); mudarFotoModal(1); };
+    $("modal-foto-ov").onclick = function (e) {
+      if (e.target === $("modal-foto-ov")) fecharModalFotos();
+    };
+    $("modal-foto-btn-comprar").onclick = function () {
+      var p = modalFotoState.p;
+      var curFoto = modalFotoState.fotos[modalFotoState.curIdx];
+      var varIdx = (curFoto && curFoto.varIdx != null) ? curFoto.varIdx : 0;
+      fecharModalFotos();
+      if (p) {
+        abrirProduto(p.id);
+        if (p.variacoes && p.variacoes[varIdx]) {
+          sel.varIdx = varIdx;
+          sel.varAtiva = p.variacoes[varIdx];
+          if (sel.varAtiva.nome) sel.cor = sel.varAtiva.nome;
+          drawDetalhe();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", function (e) {
+      if (modalFotoState.aberto) {
+        if (e.key === "Escape") fecharModalFotos();
+        else if (e.key === "ArrowLeft") mudarFotoModal(-1);
+        else if (e.key === "ArrowRight") mudarFotoModal(1);
+        return;
+      }
+      if (e.key == "Escape") painel(false);
+    });
+
+    // Suporte a swipe nas fotos em dispositivos móveis
+    (function () {
+      var touchStartX = 0;
+      var stageWrap = document.querySelector(".modal-foto-stage-wrap");
+      if (!stageWrap) return;
+      stageWrap.addEventListener("touchstart", function (e) {
+        if (e.changedTouches && e.changedTouches[0]) {
+          touchStartX = e.changedTouches[0].screenX;
+        }
+      }, { passive: true });
+      stageWrap.addEventListener("touchend", function (e) {
+        if (!modalFotoState.aberto || !e.changedTouches || !e.changedTouches[0]) return;
+        var diff = e.changedTouches[0].screenX - touchStartX;
+        if (Math.abs(diff) > 40) {
+          if (diff > 0) mudarFotoModal(-1);
+          else mudarFotoModal(1);
+        }
+      }, { passive: true });
+    })();
 
     /* ---------- busca e auto-preenchimento do cliente por telefone ---------- */
     var ultimoTelBuscado = "";
