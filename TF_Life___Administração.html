@@ -782,22 +782,46 @@
       border-radius: 8px;
       font-size: 14px;
     }
+    .ped-id-badge {
+      display: inline-block;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--g);
+      background: var(--tint);
+      padding: 3px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+      letter-spacing: -0.2px;
+      border: 1px solid rgba(30, 77, 53, 0.15);
+    }
+    @media (prefers-color-scheme: dark) {
+      .ped-id-badge {
+        color: var(--l);
+        background: rgba(155, 197, 61, 0.12);
+        border-color: rgba(155, 197, 61, 0.22);
+      }
+    }
     .ped-zap-chip {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
-      padding: 3px 8px;
-      border-radius: 6px;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 99px;
       background: rgba(37, 211, 102, 0.12);
       color: #15803d;
       font-size: 12px;
-      font-weight: 600;
+      font-weight: 700;
       text-decoration: none;
+      white-space: nowrap;
+      width: fit-content;
       transition: background 0.15s, transform 0.15s;
-      margin-top: 3px;
+      margin-top: 4px;
+      border: 1px solid rgba(37, 211, 102, 0.25);
     }
     .ped-zap-chip:hover {
-      background: rgba(37, 211, 102, 0.22);
+      background: rgba(37, 211, 102, 0.25);
+      color: #0d5f2c;
       transform: translateY(-1px);
     }
     .ped-zap-chip svg {
@@ -805,40 +829,9 @@
     }
     @media (prefers-color-scheme: dark) {
       .ped-zap-chip {
-        background: rgba(37, 211, 102, 0.2);
+        background: rgba(37, 211, 102, 0.18);
         color: #86efac;
-      }
-    }
-    .ped-live-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      border-radius: 99px;
-      background: var(--tint);
-      color: var(--g);
-      font-size: 12px;
-      font-weight: 700;
-      margin-left: auto;
-      align-self: center;
-      user-select: none;
-    }
-    .ped-live-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #22c55e;
-      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
-      animation: pedPulse 2s infinite;
-    }
-    @keyframes pedPulse {
-      0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
-      70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
-    }
-    @media (prefers-color-scheme: dark) {
-      .ped-live-badge {
-        color: var(--l);
+        border-color: rgba(37, 211, 102, 0.35);
       }
     }
   </style>
@@ -946,22 +939,18 @@
             <option value="Entregue">Entregue</option>
             <option value="Cancelado">Cancelado</option>
           </select>
-          <div class="ped-live-badge" title="Sincronização em tempo real ativa">
-            <span class="ped-live-dot"></span>
-            <span>Ao vivo</span>
-          </div>
         </div>
         <div class="tb">
           <table>
             <thead>
               <tr>
-                <th>Pedido / Data</th>
-                <th>Cliente</th>
-                <th>Endereço</th>
-                <th>Resumo dos itens</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th></th>
+                <th style="min-width:170px">Pedido / Data</th>
+                <th style="min-width:175px">Cliente</th>
+                <th style="min-width:150px">Endereço</th>
+                <th style="min-width:220px">Resumo dos itens</th>
+                <th style="min-width:110px">Total</th>
+                <th style="min-width:130px">Status</th>
+                <th style="min-width:90px"></th>
               </tr>
             </thead>
             <tbody id="ped-tb"></tbody>
@@ -1751,6 +1740,16 @@
       return t || '';
     }
 
+    function formatarIdPedido(id) {
+      if (!id) return "";
+      var str = String(id).trim();
+      var m = str.match(/^PED-\d{8}-(.+)$/);
+      if (m) {
+        return "#PED-" + m[1];
+      }
+      return str.indexOf("#") === 0 ? str : "#" + str;
+    }
+
     function classStatus(st) {
       if (st === "Em preparo") return "ped-st-preparo";
       if (st === "Pronto / Enviado") return "ped-st-pronto";
@@ -1790,6 +1789,12 @@
         var zapUrl = telDigits ? "https://wa.me/55" + telDigits : "";
         var itensPreview = esc(p.itens || "").replace(/; /g, "<br>");
         var dataFmt = formatarDataHora(p.data_hora);
+        var idFmt = formatarIdPedido(p.id);
+
+        var idCell = '<div style="white-space:nowrap">' +
+          '<span class="ped-id-badge" title="ID completo: ' + esc(p.id) + '">' + esc(idFmt) + '</span>' +
+          '<small style="color:var(--mu);font-size:12px;display:block;margin-top:2px;white-space:nowrap">' + esc(dataFmt) + '</small>' +
+        '</div>';
 
         var zapChip = telDigits
           ? '<a href="' + zapUrl + '" target="_blank" rel="noopener noreferrer" class="ped-zap-chip" title="Conversar no WhatsApp">' +
@@ -1798,9 +1803,14 @@
             '</a>'
           : '<small style="color:var(--mu)">Sem telefone</small>';
 
+        var clienteCell = '<div style="white-space:nowrap">' +
+          '<strong style="display:block;line-height:1.3">' + esc(p.nome || "Não informado") + '</strong>' +
+          zapChip +
+        '</div>';
+
         return '<tr>' +
-          '<td><strong>' + esc(p.id) + '</strong><br><small style="color:var(--mu);font-size:12px">' + esc(dataFmt) + '</small></td>' +
-          '<td><strong>' + esc(p.nome || "Não informado") + '</strong><br>' + zapChip + '</td>' +
+          '<td>' + idCell + '</td>' +
+          '<td>' + clienteCell + '</td>' +
           '<td style="max-width:180px"><small style="display:block;white-space:normal;line-height:1.3">' + esc(p.endereco || "Não informado") + '</small></td>' +
           '<td style="max-width:220px;font-size:13px"><div style="max-height:70px;overflow-y:auto;line-height:1.3">' + itensPreview + '</div></td>' +
           '<td><b style="color:var(--g);font-size:15px">' + br(p.total) + '</b><br><small class="pill" style="padding:1px 8px;font-size:11px">' + esc(p.forma_pagamento || "Não informada") + '</small></td>' +
