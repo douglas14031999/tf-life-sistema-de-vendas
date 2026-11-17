@@ -345,13 +345,23 @@ function garantirAbaPedidos() {
   return s;
 }
 
+function formatarDataHoraSheet(val) {
+  if (!val) return '';
+  if (val instanceof Date) {
+    var tz = 'America/Sao_Paulo';
+    try { tz = Session.getScriptTimeZone() || tz; } catch (x) {}
+    return Utilities.formatDate(val, tz, 'dd/MM/yyyy HH:mm:ss');
+  }
+  return String(val);
+}
+
 function pedidosList() {
   var s = SS.getSheetByName('Pedidos');
   if (!s) return [];
   return rd('Pedidos').filter(function (r) { return r.id_pedido; }).map(function (p) {
     return {
       id: String(p.id_pedido),
-      data_hora: String(p.data_hora || ''),
+      data_hora: formatarDataHoraSheet(p.data_hora),
       telefone: String(p.telefone || ''),
       nome: String(p.nome || ''),
       endereco: String(p.endereco || ''),
@@ -361,6 +371,10 @@ function pedidosList() {
       status: String(p.status || 'Recebido')
     };
   }).reverse();
+}
+
+function pedidosListAction() {
+  return { ok: 1, pedidos: pedidosList() };
 }
 
 function atualizarStatusPedido(d) {
@@ -739,7 +753,7 @@ var ACOES = {
   salvarConfig: salvarConfig,
   imagem: imagem,
   pedido: pedido,
-  pedidos: pedidosList,
+  pedidos: pedidosListAction,
   atualizarStatusPedido: atualizarStatusPedido,
   excluirPedido: excluirPedido,
   buscarCliente: buscarCliente,

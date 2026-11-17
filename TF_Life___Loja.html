@@ -1841,7 +1841,15 @@
       })
         .then(function (r) { return r.json(); })
         .then(function (r) {
-          if (r.ok) { ir(); fim(); }
+          if (r.ok) {
+            try {
+              localStorage.setItem("tflife_novo_pedido", Date.now());
+              if (window.BroadcastChannel) {
+                new BroadcastChannel("tflife_sync").postMessage("novo_pedido");
+              }
+            } catch (e) {}
+            ir(); fim();
+          }
           else {
             if (w) w.close();
             msg.textContent = r.erro || "Não foi possível registrar o pedido.";

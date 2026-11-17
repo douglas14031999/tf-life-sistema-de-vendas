@@ -782,6 +782,65 @@
       border-radius: 8px;
       font-size: 14px;
     }
+    .ped-zap-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(37, 211, 102, 0.12);
+      color: #15803d;
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.15s, transform 0.15s;
+      margin-top: 3px;
+    }
+    .ped-zap-chip:hover {
+      background: rgba(37, 211, 102, 0.22);
+      transform: translateY(-1px);
+    }
+    .ped-zap-chip svg {
+      flex: none;
+    }
+    @media (prefers-color-scheme: dark) {
+      .ped-zap-chip {
+        background: rgba(37, 211, 102, 0.2);
+        color: #86efac;
+      }
+    }
+    .ped-live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 99px;
+      background: var(--tint);
+      color: var(--g);
+      font-size: 12px;
+      font-weight: 700;
+      margin-left: auto;
+      align-self: center;
+      user-select: none;
+    }
+    .ped-live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+      animation: pedPulse 2s infinite;
+    }
+    @keyframes pedPulse {
+      0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+      70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+    }
+    @media (prefers-color-scheme: dark) {
+      .ped-live-badge {
+        color: var(--l);
+      }
+    }
   </style>
 </head>
 
@@ -887,7 +946,10 @@
             <option value="Entregue">Entregue</option>
             <option value="Cancelado">Cancelado</option>
           </select>
-          <button class="btn o" id="btn-ped-refresh" type="button" title="Atualizar pedidos">🔄 Atualizar</button>
+          <div class="ped-live-badge" title="Sincronização em tempo real ativa">
+            <span class="ped-live-dot"></span>
+            <span>Ao vivo</span>
+          </div>
         </div>
         <div class="tb">
           <table>
@@ -1661,6 +1723,34 @@
     };
 
     /* ---------- pedidos ---------- */
+    function formatarDataHora(val) {
+      if (!val) return "";
+      var str = String(val).trim();
+      var d = new Date(str);
+      if (!isNaN(d.getTime()) && (str.indexOf("GMT") > -1 || str.indexOf("T") > -1 || isNaN(Number(str)))) {
+        var dia = ('0' + d.getDate()).slice(-2);
+        var mes = ('0' + (d.getMonth() + 1)).slice(-2);
+        var ano = d.getFullYear();
+        var h = ('0' + d.getHours()).slice(-2);
+        var m = ('0' + d.getMinutes()).slice(-2);
+        return dia + '/' + mes + '/' + ano + ' às ' + h + ':' + m;
+      }
+      var mMatch = str.match(/^(\d{2}\/\d{2}\/\d{4})(?:\s+(\d{2}:\d{2})(?::\d{2})?)?/);
+      if (mMatch) {
+        return mMatch[1] + (mMatch[2] ? ' às ' + mMatch[2] : '');
+      }
+      return str;
+    }
+
+    function formatarTel(t) {
+      var d = String(t || '').replace(/\D/g, '');
+      if (d.length === 13 && d.startsWith('55')) d = d.slice(2);
+      if (d.length === 12 && d.startsWith('55')) d = d.slice(2);
+      if (d.length === 11) return '(' + d.slice(0, 2) + ') ' + d.slice(2, 7) + '-' + d.slice(7);
+      if (d.length === 10) return '(' + d.slice(0, 2) + ') ' + d.slice(2, 6) + '-' + d.slice(6);
+      return t || '';
+    }
+
     function classStatus(st) {
       if (st === "Em preparo") return "ped-st-preparo";
       if (st === "Pronto / Enviado") return "ped-st-pronto";
@@ -1695,15 +1785,22 @@
 
       $("ped-tb").innerHTML = filtrados.map(function (p) {
         var stClass = classStatus(p.status);
+        var telFmt = formatarTel(p.telefone);
         var telDigits = (p.telefone || "").replace(/\D/g, "");
-        var zapUrl = telDigits ? "https://wa.me/55" + telDigits : "#";
+        var zapUrl = telDigits ? "https://wa.me/55" + telDigits : "";
         var itensPreview = esc(p.itens || "").replace(/; /g, "<br>");
+        var dataFmt = formatarDataHora(p.data_hora);
+
+        var zapChip = telDigits
+          ? '<a href="' + zapUrl + '" target="_blank" rel="noopener noreferrer" class="ped-zap-chip" title="Conversar no WhatsApp">' +
+              '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2z"/></svg>' +
+              '<span>' + esc(telFmt) + '</span>' +
+            '</a>'
+          : '<small style="color:var(--mu)">Sem telefone</small>';
 
         return '<tr>' +
-          '<td><strong>' + esc(p.id) + '</strong><br><small style="color:var(--mu)">' + esc(p.data_hora || '') + '</small></td>' +
-          '<td><strong>' + esc(p.nome || "Não informado") + '</strong><br>' +
-            (telDigits ? '<a href="' + zapUrl + '" target="_blank" rel="noopener noreferrer" style="color:#25D366;font-weight:700;font-size:13px;text-decoration:none;display:inline-flex;align-items:center;gap:4px">📱 ' + esc(p.telefone) + '</a>' : '<small style="color:var(--mu)">Sem telefone</small>') +
-          '</td>' +
+          '<td><strong>' + esc(p.id) + '</strong><br><small style="color:var(--mu);font-size:12px">' + esc(dataFmt) + '</small></td>' +
+          '<td><strong>' + esc(p.nome || "Não informado") + '</strong><br>' + zapChip + '</td>' +
           '<td style="max-width:180px"><small style="display:block;white-space:normal;line-height:1.3">' + esc(p.endereco || "Não informado") + '</small></td>' +
           '<td style="max-width:220px;font-size:13px"><div style="max-height:70px;overflow-y:auto;line-height:1.3">' + itensPreview + '</div></td>' +
           '<td><b style="color:var(--g);font-size:15px">' + br(p.total) + '</b><br><small class="pill" style="padding:1px 8px;font-size:11px">' + esc(p.forma_pagamento || "Não informada") + '</small></td>' +
@@ -1724,21 +1821,45 @@
     }
 
     $("ped-q").oninput = $("ped-st").onchange = drawPed;
-    $("btn-ped-refresh").onclick = function () {
-      var b = $("btn-ped-refresh");
-      b.disabled = true; b.textContent = "Carregando…";
-      api("tudo").then(function (r) {
-        b.disabled = false; b.textContent = "🔄 Atualizar";
-        if (r && r.ok) {
-          S = r; S.config = r.config || {};
+
+    function sincronizarPedidosSilencioso() {
+      if (document.hidden || !TOKEN || !$("app") || $("app").hidden) return;
+      api("pedidos").then(function (r) {
+        if (!r || !r.ok || !r.pedidos) return;
+        var novos = r.pedidos;
+        var sigAtual = (S.pedidos || []).map(function (p) { return p.id + '|' + p.status + '|' + p.total; }).join(';;');
+        var sigNova = novos.map(function (p) { return p.id + '|' + p.status + '|' + p.total; }).join(';;');
+        if (sigAtual !== sigNova) {
+          var antes = (S.pedidos || []).length;
+          S.pedidos = novos;
           salvarCacheLocal();
           drawPed();
-          toast("Lista de pedidos atualizada.");
-        } else {
-          toast(r.erro || "Erro ao atualizar.");
+          if (novos.length > antes && antes > 0) {
+            toast("🔔 Novo pedido recebido: " + novos[0].id + " (" + (novos[0].nome || 'Cliente') + ")");
+          }
         }
       });
-    };
+    }
+
+    // Polling contínuo automático em tempo real a cada 5 segundos
+    setInterval(sincronizarPedidosSilencioso, 5000);
+
+    // Sincronização instantânea via BroadcastChannel e Storage
+    try {
+      if (window.BroadcastChannel) {
+        var bc = new BroadcastChannel("tflife_sync");
+        bc.onmessage = function (ev) {
+          if (ev.data === "novo_pedido" || ev.data === "atualizar") {
+            sincronizarPedidosSilencioso();
+          }
+        };
+      }
+      window.addEventListener("storage", function (e) {
+        if (e.key === "tflife_sync_time" || e.key === "tflife_novo_pedido") {
+          sincronizarPedidosSilencioso();
+        }
+      });
+    } catch (e) {}
 
     $("ped-tb").onchange = function (e) {
       var sel = e.target.closest(".ped-st-select");
@@ -1790,9 +1911,9 @@
       editPed = p;
       if (!p) return;
       $("ped-det-id").textContent = "Pedido #" + p.id;
-      $("ped-det-data").textContent = p.data_hora ? ("Data: " + p.data_hora) : "";
+      $("ped-det-data").textContent = p.data_hora ? ("Data: " + formatarDataHora(p.data_hora)) : "";
       $("ped-det-nome").textContent = p.nome || "Não informado";
-      $("ped-det-tel").textContent = p.telefone || "Não informado";
+      $("ped-det-tel").textContent = p.telefone ? formatarTel(p.telefone) : "Não informado";
 
       var telDigits = (p.telefone || "").replace(/\D/g, "");
       var zapBtn = $("ped-det-zap-btn");
@@ -1842,9 +1963,9 @@
     $("ped-det-copy").onclick = function () {
       if (!editPed) return;
       var txt = "📦 PEDIDO TF LIFE #" + editPed.id + "\n" +
-                "📅 Data: " + (editPed.data_hora || "-") + "\n" +
+                "📅 Data: " + formatarDataHora(editPed.data_hora || "-") + "\n" +
                 "👤 Cliente: " + (editPed.nome || "-") + "\n" +
-                "📱 Telefone: " + (editPed.telefone || "-") + "\n" +
+                "📱 Telefone: " + formatarTel(editPed.telefone || "-") + "\n" +
                 "📍 Endereço: " + (editPed.endereco || "-") + "\n" +
                 "💳 Pagamento: " + (editPed.forma_pagamento || "-") + "\n" +
                 "📊 Status: " + (editPed.status || "-") + "\n\n" +
