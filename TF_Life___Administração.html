@@ -1158,11 +1158,11 @@
           <div class="full"><label for="d">Descrição curta (aparece no card)</label><input id="d" maxlength="120" placeholder="Ex: Tecido leve e respirável"></div>
           <div class="full"><label for="dc">Descrição completa (aparece ao clicar em Adicionar)</label><textarea id="dc"
               rows="3" placeholder="Detalhes do produto, benefícios, composição…"></textarea></div>
-          <div><label for="co">Cores gerais (opcional)</label><input id="co" placeholder="Verde, Preto, Branco">
-            <p class="hint">Opções gerais da peça. Deixe vazio se definir nas fotos abaixo.</p>
+          <div><label for="co">Cores do produto (uma foto para cada cor)</label><input id="co" placeholder="Marrom, Azul, Roxo">
+            <p class="hint">Digite as cores separadas por vírgula. Uma foto será vinculada a cada cor automaticamente.</p>
           </div>
           <div><label for="ta">Tamanhos (opcional)</label><input id="ta" placeholder="P, M, G, GG">
-            <p class="hint">Separe por vírgula se houver.</p>
+            <p class="hint">Separe por vírgula se houver. O estoque de cada tamanho é definido para cada cor abaixo.</p>
           </div>
 
           <!-- SEÇÃO DE FOTOS E VARIAÇÕES -->
@@ -1612,6 +1612,79 @@
       }
     }
 
+    function sincronizarCoresComVariacoes() {
+      salvarValoresAtuaisDosCampos();
+      var rawCores = $("co") ? $("co").value : "";
+      var coresLista = rawCores.split(",")
+        .map(function (c) { return c.trim(); })
+        .filter(Boolean);
+
+      if (!coresLista.length) {
+        if (!varsProduto.length) {
+          varsProduto = [{
+            id: "v_" + Date.now(),
+            imagem: "",
+            nome: "Padrão",
+            preco: "",
+            estoque: "",
+            tamanhos: {}
+          }];
+        }
+        renderVars();
+        return;
+      }
+
+      var defaultPreco = varsProduto.length ? (varsProduto[0].preco || "") : "";
+      var defaultEstoque = varsProduto.length ? (varsProduto[0].estoque || "") : "";
+      var novasVars = [];
+      var usadas = {};
+
+      coresLista.forEach(function (corNome, idx) {
+        var varEncontrada = null;
+        for (var i = 0; i < varsProduto.length; i++) {
+          if (!usadas[i] && varsProduto[i].nome && varsProduto[i].nome.toLowerCase() === corNome.toLowerCase()) {
+            varEncontrada = varsProduto[i];
+            usadas[i] = true;
+            break;
+          }
+        }
+        if (!varEncontrada && varsProduto[idx] && !usadas[idx]) {
+          var n = (varsProduto[idx].nome || "").toLowerCase();
+          if (n === "padrão" || n.indexOf("opção") === 0 || !n) {
+            varEncontrada = varsProduto[idx];
+            usadas[idx] = true;
+          }
+        }
+
+        if (varEncontrada) {
+          varEncontrada.nome = corNome;
+          novasVars.push(varEncontrada);
+        } else {
+          novasVars.push({
+            id: "v_" + Date.now() + "_" + Math.random().toString(36).substr(2, 4),
+            imagem: "",
+            nome: corNome,
+            preco: defaultPreco,
+            estoque: defaultEstoque,
+            tamanhos: {}
+          });
+        }
+      });
+
+      varsProduto = novasVars;
+      renderVars();
+    }
+
+    function sincronizarVariacoesComCampoCores() {
+      if (!$("co")) return;
+      var nomes = varsProduto
+        .map(function (v) { return (v.nome || "").trim(); })
+        .filter(function (n) { return n && n.toLowerCase() !== "padrão"; });
+      if (nomes.length) {
+        $("co").value = nomes.join(", ");
+      }
+    }
+
     function renderVars() {
       var container = $("vars-list");
       if (!container) return;
@@ -1632,8 +1705,9 @@
       var h = "";
       varsProduto.forEach(function (v, idx) {
         var isMain = (idx === 0);
+        var corNome = v.nome && v.nome.toLowerCase() !== "padrão" ? v.nome : "";
         var imgHtml = v.imagem
-          ? '<img src="' + esc(v.imagem) + '" alt="">'
+          ? '<img src="' + esc(v.imagem) + '" alt="' + esc(v.nome || '') + '">'
           : '<span class="var-no-img">sem foto</span>';
 
         if (!v.tamanhos) v.tamanhos = {};
@@ -1645,6 +1719,13 @@
           });
           v.estoque = subtotalTam;
         }
+
+        var badgeText = (isMain ? 'Foto 1 (Capa Principal)' : 'Foto ' + (idx + 1))
+          + (corNome ? ' · Cor: <b>' + esc(corNome) + '</b>' : '');
+
+        var uploadLabel = v.imagem
+          ? ('Trocar foto' + (corNome ? ' (' + esc(corNome) + ')' : ''))
+          : ('Enviar foto' + (corNome ? ' (' + esc(corNome) + ')' : ''));
 
         var estoqueInputHtml = "";
         if (temTamanhos) {
@@ -1662,13 +1743,13 @@
             + '    <input type="number" step="0.01" min="0" class="var-preco" data-idx="' + idx + '" value="' + (v.preco !== undefined ? v.preco : '') + '" placeholder="0,00" required>'
             + '  </div>'
             + '  <div>'
-            + '    <label>Estoque total desta foto</label>'
+            + '    <label>Estoque total desta cor/foto</label>'
             + '    <input type="text" class="var-estoque-display" value="' + subtotalTam + ' un" readonly style="background:var(--tint);font-weight:700;color:var(--g);cursor:default">'
             + '  </div>'
             + '</div>'
             + '<div class="var-tam-box">'
             + '  <div class="var-tam-head">'
-            + '    <label>Quantidade por tamanho para esta foto:</label>'
+            + '    <label>Quantidade por tamanho para ' + (corNome ? 'a cor <b>' + esc(corNome) + '</b>:' : 'esta foto:') + '</label>'
             + '    <span class="var-tam-subtotal">Subtotal: <b>' + subtotalTam + ' un</b></span>'
             + '  </div>'
             + '  <div class="var-tam-grid">' + tamGridHtml + '</div>'
@@ -1689,7 +1770,7 @@
         h += '<div class="var-card" data-idx="' + idx + '">'
           + '  <div class="var-card-head">'
           + '    <div class="var-badge ' + (isMain ? 'var-badge-main' : '') + '">'
-          +        (isMain ? 'Foto 1 · Capa Principal' : 'Foto ' + (idx + 1))
+          +        badgeText
           + '    </div>'
           +      (varsProduto.length > 1 ? '<button type="button" class="var-btn-del" data-del-var="' + idx + '" title="Remover esta foto">✕ Remover</button>' : '')
           + '  </div>'
@@ -1697,15 +1778,15 @@
           + '    <div class="var-img-box">'
           + '      <div class="var-preview" id="var-pv-' + idx + '">' + imgHtml + '</div>'
           + '      <label class="btn o btn-xs var-upload-btn">'
-          + '        <span>' + (v.imagem ? 'Trocar foto' : 'Enviar foto') + '</span>'
+          + '        <span>' + uploadLabel + '</span>'
           + '        <input type="file" accept="image/jpeg,image/png,image/webp" data-var-file="' + idx + '" style="display:none">'
           + '      </label>'
           + '      <div class="var-upload-status" id="var-status-' + idx + '"></div>'
           + '    </div>'
           + '    <div class="var-fields">'
           + '      <div>'
-          + '        <label>Cor / Nome da opção (opcional)</label>'
-          + '        <input type="text" class="var-nome" data-idx="' + idx + '" value="' + esc(v.nome || '') + '" placeholder="Ex: Azul, Verde, Rosa, etc.">'
+          + '        <label>Cor vinculada a esta foto</label>'
+          + '        <input type="text" class="var-nome" data-idx="' + idx + '" value="' + esc(v.nome || '') + '" placeholder="Ex: Marrom, Azul, Roxo">'
           + '      </div>'
           +        estoqueInputHtml
           + '    </div>'
@@ -1720,13 +1801,16 @@
     $("btn-add-var").onclick = function () {
       salvarValoresAtuaisDosCampos();
       var defaultPreco = varsProduto.length ? (varsProduto[0].preco || "") : "";
+      var novaCor = "Cor " + (varsProduto.length + 1);
       varsProduto.push({
         id: "v_" + Date.now() + "_" + Math.random().toString(36).substr(2, 4),
         imagem: "",
-        nome: "Opção " + (varsProduto.length + 1),
+        nome: novaCor,
         preco: defaultPreco,
-        estoque: 10
+        estoque: 10,
+        tamanhos: {}
       });
+      sincronizarVariacoesComCampoCores();
       renderVars();
     };
 
@@ -1736,6 +1820,7 @@
         salvarValoresAtuaisDosCampos();
         var idx = Number(delBtn.dataset.delVar);
         varsProduto.splice(idx, 1);
+        sincronizarVariacoesComCampoCores();
         renderVars();
       }
     });
@@ -1771,11 +1856,36 @@
       }
       var idx = Number(t.dataset.idx);
       if (isNaN(idx) || !varsProduto[idx]) return;
-      if (t.classList.contains("var-nome")) varsProduto[idx].nome = t.value;
+      if (t.classList.contains("var-nome")) {
+        varsProduto[idx].nome = t.value;
+        sincronizarVariacoesComCampoCores();
+        var card = t.closest(".var-card");
+        if (card) {
+          var isMain = (idx === 0);
+          var badgeEl = card.querySelector(".var-badge");
+          if (badgeEl) {
+            badgeEl.innerHTML = (isMain ? 'Foto 1 (Capa Principal)' : 'Foto ' + (idx + 1))
+              + (t.value ? ' · Cor: <b>' + esc(t.value) + '</b>' : '');
+          }
+          var upBtn = card.querySelector(".var-upload-btn span");
+          if (upBtn) {
+            var temImg = !!varsProduto[idx].imagem;
+            upBtn.textContent = temImg
+              ? ('Trocar foto' + (t.value ? ' (' + t.value + ')' : ''))
+              : ('Enviar foto' + (t.value ? ' (' + t.value + ')' : ''));
+          }
+        }
+      }
       if (t.classList.contains("var-preco")) varsProduto[idx].preco = t.value === "" ? "" : parseFloat(t.value);
       if (t.classList.contains("var-estoque")) varsProduto[idx].estoque = t.value === "" ? "" : parseInt(t.value, 10);
       atualizarResumoVars();
     });
+
+    if ($("co")) {
+      $("co").addEventListener("input", function () {
+        sincronizarCoresComVariacoes();
+      });
+    }
 
     if ($("ta")) {
       $("ta").addEventListener("input", function () {
@@ -1874,13 +1984,26 @@
       varsProduto = [];
       if (p && p.variacoes && p.variacoes.length) {
         varsProduto = JSON.parse(JSON.stringify(p.variacoes));
+      } else if (p && p.cores && p.cores.split(",").map(function(c){ return c.trim(); }).filter(Boolean).length > 1) {
+        var coresIniciais = p.cores.split(",").map(function(c){ return c.trim(); }).filter(Boolean);
+        varsProduto = coresIniciais.map(function(corNome, cIdx) {
+          return {
+            id: "v_" + Date.now() + "_" + cIdx,
+            imagem: cIdx === 0 ? (p.imagem || "") : "",
+            nome: corNome,
+            preco: (p.preco !== undefined) ? p.preco : "",
+            estoque: (p.estoque !== undefined) ? p.estoque : "",
+            tamanhos: {}
+          };
+        });
       } else {
         varsProduto = [{
           id: "v_" + Date.now(),
           imagem: p ? (p.imagem || "") : "",
           nome: (p && p.cores) ? p.cores.split(",")[0].trim() : "Padrão",
           preco: (p && p.preco !== undefined) ? p.preco : "",
-          estoque: (p && p.estoque !== undefined) ? p.estoque : ""
+          estoque: (p && p.estoque !== undefined) ? p.estoque : "",
+          tamanhos: {}
         }];
       }
       renderVars();

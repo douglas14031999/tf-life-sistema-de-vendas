@@ -1907,7 +1907,9 @@
       var h = '<div class="dpic">' + (p.etiqueta ? '<span class="tag">' + esc(p.etiqueta) + '</span>' : '') + imgHtml + '</div>';
 
       if (vars.length > 1) {
-        h += '<div class="op"><b>Fotos & Opções (' + vars.length + ')</b><div class="gal-vars">';
+        var corAtivaNome = (varItem && varItem.nome) ? varItem.nome : sel.cor;
+        var tituloGal = corAtivaNome ? ('Cores disponíveis · <span style="color:var(--g)">' + esc(corAtivaNome) + '</span>') : ('Fotos & Opções (' + vars.length + ')');
+        h += '<div class="op"><b>' + tituloGal + '</b><div class="gal-vars">';
         vars.forEach(function (v, idx) {
           var isAtiva = (sel.varIdx === idx);
           var thumbImg = v.imagem
@@ -2105,7 +2107,7 @@
       if (p.variacoes && Array.isArray(p.variacoes)) {
         p.variacoes.forEach(function (v, idx) {
           if (v && v.imagem) {
-            var leg = v.nome ? (p.nome + ' · ' + v.nome) : p.nome;
+            var leg = v.nome ? (p.nome + ' · Cor: ' + v.nome) : p.nome;
             addFoto(v.imagem, leg, v.preco != null ? v.preco : p.preco, idx);
           }
         });
