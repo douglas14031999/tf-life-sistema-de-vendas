@@ -4373,16 +4373,23 @@
       var end = String(dados.endereco || "").trim();
       var pag = String(dados.pagamento || "Pix").trim();
 
-      // Emoji dinâmico conforme a forma de pagamento
+      // Emoji e instrução personalizada conforme a forma de pagamento
       var iconePag = "💳";
       var pagLower = pag.toLowerCase();
+      var instrucaoPag = "";
+
       if (pagLower.indexOf("pix") > -1) {
         iconePag = "💠";
+        instrucaoPag = "Por favor, confirme meu pedido e me envie a chave Pix para realizar o pagamento! Fico no aguardo. 🙏✨";
       } else if (pagLower.indexOf("dinheiro") > -1) {
         iconePag = "💵";
+        instrucaoPag = "Por favor, confirme meu pedido para combinarmos como será o pagamento e se será necessário troco na entrega! Fico no aguardo. 🙏✨";
+      } else {
+        iconePag = "💳";
+        instrucaoPag = "Por favor, confirme meu pedido para combinarmos como será o pagamento no cartão (levar a maquininha na entrega ou envio de link)! Fico no aguardo. 🙏✨";
       }
 
-      var msg = "Oba! Novo pedido na TF Life! 🛍️\n\n";
+      var msg = "Olá, TF Life! Gostaria de fazer o pedido: 🛍️\n\n";
 
       if (numPed) {
         var numFormatado = String(numPed).replace(/^PED-(?:\d{8}-)?0*/i, "").replace(/^#/, "");
@@ -4409,7 +4416,7 @@
         msg += "   " + br(subItem) + "\n\n";
       });
 
-      msg += iconePag + " *" + pag + "*\n\n";
+      msg += iconePag + " *Forma de pagamento:*\n" + pag + "\n\n";
 
       msg += "📍 *Entrega:*\n" + end + "\n\n";
 
@@ -4424,7 +4431,9 @@
       msg += "👤 *Cliente:* " + nm + "\n";
       msg += "📱 *Telefone:* " + tel + "\n\n";
 
-      msg += "Obrigado pela preferência, se precisar de algo é só chamar! 😉";
+      msg += "━━━━━━━━━━━━━━━━━━━━\n";
+      msg += "⏳ *Solicitação de Aprovação:*\n";
+      msg += instrucaoPag;
 
       return msg;
     }
