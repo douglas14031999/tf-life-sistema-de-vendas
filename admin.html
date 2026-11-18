@@ -133,6 +133,7 @@ tr:last-child td{border:0}
 .ov.on{display:flex}
 .ov.on .md{animation:up .22s ease-out}
 @keyframes up{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.ov.on .md{animation:none}}
 .md{background:var(--card);border-radius:20px;width:min(560px,100%);max-height:92vh;overflow:auto;padding:24px;box-shadow:0 30px 70px -20px rgba(0,0,0,.5)}
 .md h2{font-size:22px;font-weight:700;margin-bottom:14px}
@@ -787,7 +788,7 @@ footer{padding-bottom:84px}
       $("px").hidden = forcada; $("ps").textContent = forcada ? "Por segurança, defina uma nova senha para continuar." : "Escolha uma nova senha para a sua conta."
     }
     function telaApp() { $("lg").hidden = true; $("pw").hidden = true; $("app").hidden = false; $("who").textContent = "Olá, " + NOME }
-    function sair(msg) { TOKEN = ""; try { localStorage.removeItem("tf_t"); localStorage.removeItem("tf_n"); localStorage.removeItem("tf_admin_data"); } catch (e) { } telaLogin(msg) }
+    function sair(msg) { TOKEN = ""; try { localStorage.removeItem("tf_t"); localStorage.removeItem("tf_n"); } catch (e) { } telaLogin(msg) }
     $("lf").onsubmit = function (e) {
       e.preventDefault(); var b = $("lb"); busy(b, true); b.textContent = "Entrando…"; $("le").textContent = "";
       api("login", { usuario: $("lu").value, senha: $("ls").value }).then(function (r) {
@@ -795,7 +796,21 @@ footer{padding-bottom:84px}
         if (!r.ok) { if (!r.sessao) $("le").textContent = r.erro || "Não foi possível entrar."; return }
         TOKEN = r.token; NOME = r.nome; try { localStorage.setItem("tf_t", TOKEN); localStorage.setItem("tf_n", NOME) } catch (x) { }
         $("ls").value = "";
-        if (r.trocar) { $("pa").value = ""; telaSenha(true) } else iniciar()
+        if (r.trocar) {
+          $("pa").value = "";
+          telaSenha(true);
+        } else if (r.dados && r.dados.produtos) {
+          // OTIMIZAÇÃO CRÍTICA: Dados do painel já chegam empacotados no próprio login (0ms de espera!)
+          S = r.dados; S.config = r.dados.config || {};
+          salvarCacheLocal();
+          telaApp();
+          preencherCats(); drawP(); drawPed(); drawC(); drawU(); drawCp();
+          if (S.config.whatsapp) $("cw").value = S.config.whatsapp;
+          if (S.config.faixa) $("cx").value = String(S.config.faixa).split("|").join("\n");
+          atualizarPreviewConfig();
+        } else {
+          iniciar();
+        }
       })
     };
     $("pf").onsubmit = function (e) {
@@ -826,35 +841,41 @@ footer{padding-bottom:84px}
     }
 
     /* ---------- carga instantânea com cache local ---------- */
-
-
     function iniciar() {
       telaApp();
+      var temCache = false;
       // Renderização instantânea se já houver dados em cache
       try {
         var c = localStorage.getItem("tf_admin_data");
         if (c) {
           var d = JSON.parse(c);
-          if (d && d.produtos) {
+          if (d && d.produtos && d.produtos.length) {
+            temCache = true;
             S = d; S.config = S.config || {};
             preencherCats(); drawP(); drawPed(); drawC(); drawU(); drawCp();
             if (S.config.whatsapp) $("cw").value = S.config.whatsapp;
             if (S.config.faixa) $("cx").value = String(S.config.faixa).split("|").join("\n");
             atualizarPreviewConfig();
-                      }
+          }
         }
       } catch (e) {}
 
+      // Se ainda não há cache local, exibe um skeleton limpo para evitar tela em branco
+      if (!temCache) {
+        $("tb").innerHTML = '<tr><td colspan="6" style="text-align:center;padding:36px;color:var(--mu)"><div style="display:inline-block;width:24px;height:24px;border:3px solid var(--bd);border-top-color:var(--ac);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:8px"></div><div>Carregando produtos…</div></td></tr>';
+        if ($("ped-tb")) $("ped-tb").innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--mu)">Carregando pedidos…</td></tr>';
+      }
+
       // Sincronização em segundo plano com o servidor
       api("tudo").then(function (r) {
-        if (!r.ok) { if (!r.sessao && !r.trocar) toast(r.erro || "Erro ao carregar."); return; }
+        if (!r.ok) { if (!r.sessao && !r.trocar && !temCache) toast(r.erro || "Erro ao carregar."); return; }
         S = r; S.config = r.config || {};
         salvarCacheLocal();
         preencherCats(); drawP(); drawPed(); drawC(); drawU(); drawCp();
         $("cw").value = S.config.whatsapp || "";
         $("cx").value = String(S.config.faixa || "").split("|").join("\n");
         atualizarPreviewConfig();
-              });
+      });
     }
     function preencherCats() {
       var n = S.categorias.map(function (c) { return c.nome });
@@ -1127,6 +1148,7 @@ footer{padding-bottom:84px}
         var analise = analisarEstoque(p);
         var totalLow = Number(p.estoque || 0) <= 5;
         var capaImg = p.imagem || (p.variacoes && p.variacoes[0] && p.variacoes[0].imagem);
+        var thumbImg = capaImg ? capaImg.replace(/([?&]sz=)[ws]?\d+/i, "$1w100") : "";
         var precoTxt = br(p.preco);
         if (p.variacoes && p.variacoes.length > 1) {
           var precos = p.variacoes.map(function(vx){ return Number(vx.preco) || 0; }).filter(function(pr){ return pr > 0; });
@@ -1169,7 +1191,7 @@ footer{padding-bottom:84px}
           }
         }
 
-        return '<tr class="' + (p.ativo ? "" : "off") + '"><td><div class="pn">' + (capaImg ? '<img class="th" src="' + esc(capaImg) + '" alt="">' : '<span class="th"></span>') + '<div><strong>' + esc(p.nome) + '</strong>' + varBadge + '<br><small style="color:var(--mu)">' + esc(p.descricao) + '</small></div></div></td><td><span class="pill">' + esc(p.categoria) + '</span></td><td>' + precoTxt + '</td><td>' + estoqueHtml + '</td><td>' + '<span class="dot' + (p.ativo ? " on" : "") + '">' + (p.ativo ? "Ativo" : "Oculto") + '</span>' + '</td><td class="ac"><button class="btn o" data-e="' + esc(p.id) + '">Editar</button></td></tr>'
+        return '<tr class="' + (p.ativo ? "" : "off") + '"><td><div class="pn">' + (capaImg ? '<img class="th" src="' + esc(thumbImg) + '" alt="" loading="lazy" decoding="async">' : '<span class="th"></span>') + '<div><strong>' + esc(p.nome) + '</strong>' + varBadge + '<br><small style="color:var(--mu)">' + esc(p.descricao) + '</small></div></div></td><td><span class="pill">' + esc(p.categoria) + '</span></td><td>' + precoTxt + '</td><td>' + estoqueHtml + '</td><td>' + '<span class="dot' + (p.ativo ? " on" : "") + '">' + (p.ativo ? "Ativo" : "Oculto") + '</span>' + '</td><td class="ac"><button class="btn o" data-e="' + esc(p.id) + '">Editar</button></td></tr>'
       }).join("");
 
       $("em").hidden = totalItens > 0;
@@ -1888,11 +1910,11 @@ footer{padding-bottom:84px}
         return hay.indexOf(q) > -1;
       });
 
-      var totalCount = L.length;
-      var faturamento = L.reduce(function (acc, p) {
+      var totalCount = (S.resumoPed && S.resumoPed.total != null) ? S.resumoPed.total : L.length;
+      var faturamento = (S.resumoPed && S.resumoPed.faturamento != null) ? S.resumoPed.faturamento : L.reduce(function (acc, p) {
         return p.status !== "Cancelado" ? acc + (Number(p.total) || 0) : acc;
       }, 0);
-      var pendentes = L.filter(function (p) {
+      var pendentes = (S.resumoPed && S.resumoPed.pendentes != null) ? S.resumoPed.pendentes : L.filter(function (p) {
         return p.status === "Recebido" || p.status === "Em preparo" || p.status === "Pronto / Enviado";
       }).length;
 
