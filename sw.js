@@ -2,11 +2,12 @@
  * Service Worker - TF Life PWA
  * Gerencia cache do shell, modo offline e atualização de conteúdo
  */
-const CACHE_NAME = 'tflife-pwa-v1';
+const CACHE_NAME = 'tflife-pwa-v2';
 
 const STATIC_ASSETS = [
   './',
   './index.html',
+  './admin.html',
   './manifest.webmanifest',
   './favicon.png',
   './apple-touch-icon.png',
@@ -14,7 +15,10 @@ const STATIC_ASSETS = [
   './icon-512.png',
   './icon-maskable-192.png',
   './icon-maskable-512.png',
+  './logo.png',
   './logo-branca.png',
+  './logo-branca.svg',
+  './hero-leaf.png',
   './og-image.jpg'
 ];
 

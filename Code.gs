@@ -81,6 +81,9 @@ function doGet(e) {
 }
 
 /* ---------- Ações ---------- */
+var PUBLICAS = { login: 1, pedido: 1, buscarCliente: 1, validarCupom: 1 };
+var READ_ONLY = { login: 1, tudo: 1, pedidos: 1, buscarCliente: 1, validarCupom: 1 };
+
 function doPost(e) {
   try {
     var d = JSON.parse(e.postData.contents), f = ACOES[d.a];
@@ -91,11 +94,13 @@ function doPost(e) {
       if (bool(u.trocar_senha) && d.a !== 'senha') return out({ ok: 0, erro: 'Defina uma nova senha primeiro.', trocar: 1 });
       d.u = u;
     }
+    if (READ_ONLY[d.a]) {
+      return out(f(d));
+    }
     var lock = LockService.getScriptLock(); lock.waitLock(15000);
     try { return out(f(d)); } finally { lock.releaseLock(); }
   } catch (x) { return out({ ok: 0, erro: String(x.message || x) }); }
 }
-var PUBLICAS = { login: 1, pedido: 1, buscarCliente: 1, validarCupom: 1 };
 
 /* ---------- Login e sessão ---------- */
 function hash(u, s) {
