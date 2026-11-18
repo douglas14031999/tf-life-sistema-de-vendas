@@ -1,0 +1,40 @@
+{
+  "name": "TF Life – Loja Oficial",
+  "short_name": "TF Life",
+  "description": "Refeições saudáveis, quentinhas fit, sucos naturais e suplementos.",
+  "start_url": "./?source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#1b4d32",
+  "theme_color": "#1b4d32",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "categories": ["shopping", "food", "lifestyle"],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

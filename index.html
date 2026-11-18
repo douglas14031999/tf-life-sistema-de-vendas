@@ -16,12 +16,15 @@
   <meta name="theme-color" content="#1E4D35">
   <link rel="canonical" href="https://tflife.provacanoa.tech/">
 
-  <!-- Favicon & Ícones Mobile -->
+  <!-- Favicon & PWA Mobile -->
+  <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="TF Life">
+  <meta name="application-name" content="TF Life">
 
   <!-- Open Graph / Facebook / WhatsApp -->
   <meta property="og:type" content="website">
@@ -1734,6 +1737,159 @@
       animation: pulseHighlight 1.5s 2;
       border-color: var(--g) !important;
     }
+
+    /* Card de Instalação PWA */
+    .pwa-card {
+      position: fixed;
+      bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+      left: 50%;
+      transform: translateX(-50%) translateY(120%);
+      width: calc(100% - 32px);
+      max-width: 440px;
+      background: var(--card, #ffffff);
+      border: 1px solid rgba(27, 77, 50, 0.18);
+      border-radius: 20px;
+      padding: 16px;
+      box-shadow: 0 16px 40px rgba(15, 47, 36, 0.22), 0 2px 8px rgba(0, 0, 0, 0.08);
+      z-index: 9998;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      opacity: 0;
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .pwa-card.pwa-visible {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+    .pwa-card-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+    }
+    .pwa-card-icon {
+      flex-shrink: 0;
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+      background: #1b4d32;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .pwa-card-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .pwa-card-text {
+      flex: 1;
+      min-width: 0;
+      padding-right: 18px;
+    }
+    .pwa-card-text strong {
+      display: block;
+      font-size: 14.5px;
+      font-weight: 800;
+      color: #123322;
+      letter-spacing: -0.2px;
+      margin-bottom: 2px;
+    }
+    .pwa-card-text p {
+      font-size: 12px;
+      color: #556b60;
+      line-height: 1.35;
+      margin: 0;
+    }
+    .pwa-btn-close {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: transparent;
+      border: none;
+      font-size: 20px;
+      line-height: 1;
+      color: #778f83;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, color 0.15s;
+    }
+    .pwa-btn-close:hover {
+      background: rgba(0, 0, 0, 0.05);
+      color: #123322;
+    }
+    .pwa-card-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .pwa-btn-install {
+      flex: 1;
+      height: 40px;
+      background: #1b4d32;
+      color: #ffffff;
+      border: none;
+      border-radius: 99px;
+      font-size: 13.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      box-shadow: 0 4px 14px rgba(27, 77, 50, 0.3);
+      transition: background 0.15s, transform 0.1s;
+    }
+    .pwa-btn-install:hover {
+      background: #153c27;
+    }
+    .pwa-btn-install:active {
+      transform: scale(0.98);
+    }
+    .pwa-btn-later {
+      height: 40px;
+      padding: 0 14px;
+      background: transparent;
+      border: 1px solid rgba(27, 77, 50, 0.18);
+      border-radius: 99px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #4b6356;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .pwa-btn-later:hover {
+      background: rgba(0, 0, 0, 0.04);
+      color: #123322;
+    }
+    @media (prefers-color-scheme: dark) {
+      .pwa-card {
+        background: #15291f;
+        border-color: rgba(255, 255, 255, 0.1);
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+      }
+      .pwa-card-text strong {
+        color: #e5f4ec;
+      }
+      .pwa-card-text p {
+        color: #9ab4a6;
+      }
+      .pwa-btn-later {
+        border-color: rgba(255, 255, 255, 0.15);
+        color: #bcd4c7;
+      }
+    }
   </style>
 </head>
 
@@ -1961,6 +2117,31 @@
 
   <!-- Notificação Toast -->
   <div id="toast" class="toast-aviso" role="status" aria-live="polite"></div>
+
+  <!-- Card de Instalação do PWA (exibido apenas se não estiver instalado) -->
+  <aside id="pwa-install-card" class="pwa-card" aria-label="Instalar aplicativo TF Life" hidden>
+    <div class="pwa-card-content">
+      <div class="pwa-card-icon">
+        <img src="icon-192.png" alt="App TF Life" width="48" height="48">
+      </div>
+      <div class="pwa-card-text">
+        <strong>Instale o App TF Life</strong>
+        <p id="pwa-card-desc">Adicione à tela inicial para pedidos mais rápidos e acesso direto sem navegador.</p>
+      </div>
+      <button type="button" class="pwa-btn-close" id="pwa-btn-dismiss" title="Fechar" aria-label="Fechar">×</button>
+    </div>
+    <div class="pwa-card-actions">
+      <button type="button" class="pwa-btn-install" id="pwa-btn-install">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        <span>Instalar Aplicativo</span>
+      </button>
+      <button type="button" class="pwa-btn-later" id="pwa-btn-later">Agora não</button>
+    </div>
+  </aside>
 
   <script>
     /* Cole aqui a URL /exec gerada na implantação do Apps Script.
@@ -2432,7 +2613,7 @@
             });
           }
         });
-      } catch (e) {}
+      } catch (e) { }
 
       var ov = $("modal-foto-ov");
       ov.style.display = "flex";
@@ -2701,9 +2882,9 @@
                   var ci = {};
                   ci['image/png'] = pngBlob;
                   navigator.clipboard.write([new ClipboardItem(ci)]).catch(function () {
-                    navigator.clipboard.writeText(textoMsg).catch(function () {});
+                    navigator.clipboard.writeText(textoMsg).catch(function () { });
                   });
-                } catch (e) {}
+                } catch (e) { }
               }
             });
           }
@@ -3233,6 +3414,148 @@
     window.addEventListener("storage", function (e) {
       if (e.key === "tflife_sync_time") carregar(true);
     });
+
+    /* ---------- PWA: Registro de Service Worker e Detecção Inteligente de Instalação ---------- */
+    var deferredPwaPrompt = null;
+    var isIosDevice = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+
+    function isAppJaInstalado() {
+      // 1. Está rodando em modo standalone (app aberto pela tela inicial)?
+      if (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) return true;
+      if (window.navigator && window.navigator.standalone === true) return true;
+      if (document.referrer && document.referrer.indexOf("android-app://") !== -1) return true;
+      if (new URLSearchParams(window.location.search).get("source") === "pwa") return true;
+
+      // 2. Registro salvo no navegador de instalação confirmada
+      try {
+        if (localStorage.getItem("tf_pwa_installed") === "true") return true;
+      } catch (e) { }
+
+      return false;
+    }
+
+    function exibirCardPwa() {
+      if (isAppJaInstalado()) return;
+
+      var card = $("pwa-install-card");
+      if (!card) return;
+
+      // Verifica se o usuário dispensou recentemente (cooldown de 3 dias)
+      try {
+        var dispensadoAte = Number(localStorage.getItem("tf_pwa_dispensado") || 0);
+        if (Date.now() < dispensadoAte) return;
+      } catch (e) { }
+
+      card.removeAttribute("hidden");
+      setTimeout(function () {
+        card.classList.add("pwa-visible");
+      }, 100);
+    }
+
+    function esconderCardPwa() {
+      var card = $("pwa-install-card");
+      if (!card) return;
+      card.classList.remove("pwa-visible");
+      setTimeout(function () {
+        card.setAttribute("hidden", "");
+      }, 350);
+    }
+
+    function dispensarCardPwa() {
+      esconderCardPwa();
+      try {
+        // Não exibe novamente por 3 dias para não incomodar o usuário
+        localStorage.setItem("tf_pwa_dispensado", String(Date.now() + (3 * 24 * 60 * 60 * 1000)));
+      } catch (e) { }
+    }
+
+    // Se já estiver em modo standalone, salva no localStorage para futuras consultas
+    if (isAppJaInstalado()) {
+      try { localStorage.setItem("tf_pwa_installed", "true"); } catch (e) { }
+    }
+
+    // Registra Service Worker para suporte offline e PWA
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function () {
+        navigator.serviceWorker.register("./sw.js", { scope: "./" }).catch(function (err) {
+          console.warn("[PWA] Service Worker:", err);
+        });
+      });
+    }
+
+    // Verifica via API moderna do Chromium se o app já está instalado no sistema
+    if ("getInstalledRelatedApps" in navigator) {
+      navigator.getInstalledRelatedApps().then(function (apps) {
+        if (apps && apps.length > 0) {
+          try { localStorage.setItem("tf_pwa_installed", "true"); } catch (e) { }
+          esconderCardPwa();
+        }
+      }).catch(function () { });
+    }
+
+    // Evento disparado quando o navegador oferece instalação (Chrome/Edge/Android)
+    window.addEventListener("beforeinstallprompt", function (e) {
+      e.preventDefault();
+      deferredPwaPrompt = e;
+
+      // Só exibe se ainda não estiver instalado
+      if (!isAppJaInstalado()) {
+        // Pequeno atraso para a interface inicial carregar suavemente
+        setTimeout(exibirCardPwa, 1500);
+      }
+    });
+
+    // Evento disparado logo após a instalação com sucesso
+    window.addEventListener("appinstalled", function () {
+      try { localStorage.setItem("tf_pwa_installed", "true"); } catch (e) { }
+      deferredPwaPrompt = null;
+      esconderCardPwa();
+      mostrarToast("App TF Life instalado com sucesso! 🎉", 3500);
+    });
+
+    // Suporte específico para iOS Safari (não possui beforeinstallprompt)
+    if (isIosDevice && !isAppJaInstalado()) {
+      var pwaDesc = $("pwa-card-desc");
+      if (pwaDesc) {
+        pwaDesc.textContent = "Toque em Instalar e siga o passo a passo para adicionar à tela de início.";
+      }
+      setTimeout(function () {
+        if (!isAppJaInstalado()) {
+          exibirCardPwa();
+        }
+      }, 2500);
+    }
+
+    // Eventos de clique nos botões do Card de Instalação
+    var btnInstall = $("pwa-btn-install");
+    if (btnInstall) {
+      btnInstall.addEventListener("click", function () {
+        if (deferredPwaPrompt) {
+          deferredPwaPrompt.prompt();
+          deferredPwaPrompt.userChoice.then(function (res) {
+            if (res && res.outcome === "accepted") {
+              try { localStorage.setItem("tf_pwa_installed", "true"); } catch (e) { }
+              esconderCardPwa();
+            }
+            deferredPwaPrompt = null;
+          }).catch(function () { });
+        } else if (isIosDevice) {
+          mostrarToast("No Safari: toque no ícone Compartilhar (⎋) e depois 'Adicionar à Tela de Início' 📲", 6000);
+        } else {
+          mostrarToast("Use as opções do seu navegador para 'Instalar aplicativo' ou 'Adicionar à tela inicial'.", 4000);
+        }
+      });
+    }
+
+    var btnDismiss = $("pwa-btn-dismiss");
+    if (btnDismiss) {
+      btnDismiss.addEventListener("click", dispensarCardPwa);
+    }
+
+    var btnLater = $("pwa-btn-later");
+    if (btnLater) {
+      btnLater.addEventListener("click", dispensarCardPwa);
+    }
   </script>
 </body>
 
