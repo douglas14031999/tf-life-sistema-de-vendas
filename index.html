@@ -2493,22 +2493,18 @@
       var infoCor = (legendaCor && legendaCor !== p.nome) ? ("\n🎨 Opção: " + legendaCor) : "";
       var desc = (p.descricao_completa || p.descricao || "").trim();
 
-      var hostUrl = (window.location.origin && window.location.origin.indexOf('http') === 0)
-        ? window.location.origin
-        : 'https://tflife.provacanoa.tech';
-
-      // Link 100% dinâmico no index.html (escalável para qualquer quantidade de produtos)
+      // Link OG dinâmico via Apps Script (gera preview com foto do produto no WhatsApp)
       var fotoIdx = modalFotoState.aberto ? modalFotoState.curIdx : ((sel && sel.varIdx != null) ? sel.varIdx : 0);
-      var linkDireto = hostUrl + '/index.html?p=' + encodeURIComponent(p.id);
+      var linkOG = API + '?a=og&p=' + encodeURIComponent(p.id);
       if (fotoIdx > 0) {
-        linkDireto += '&foto=' + fotoIdx;
+        linkOG += '&foto=' + fotoIdx;
       }
 
       var titulo = p.nome + (legendaCor && legendaCor !== p.nome ? (" · " + legendaCor) : "") + " - TF Life";
       var textoMsg = "✨ *" + p.nome + "*\n"
                    + (desc ? ("\n" + desc + "\n") : "")
                    + "\n💰 *Valor:* " + precoFmt + infoCor
-                   + "\n\n👉 *Veja a foto e compre direto no link:* \n" + linkDireto;
+                   + "\n\n👉 *Veja a foto e compre direto no link:* \n" + linkOG;
 
       var nomeLimpo = (p.nome || 'produto').replace(/[^a-zA-Z0-9]/g, '_') + (fotoIdx > 0 ? ('_' + fotoIdx) : '');
 
@@ -2548,7 +2544,7 @@
             mostrarToast("Compartilhado com sucesso!", 2000);
           }).catch(function (err) {
             if (err && err.name === 'AbortError') return;
-            fallbackCompartilhar(textoMsg, linkDireto);
+            fallbackCompartilhar(textoMsg, linkOG);
           });
         }
 
@@ -2561,11 +2557,11 @@
             mostrarToast("Compartilhado com sucesso!", 2000);
           }).catch(function (e) {
             if (e && e.name === 'AbortError') return;
-            fallbackCompartilhar(textoMsg, linkDireto);
+            fallbackCompartilhar(textoMsg, linkOG);
           });
         }
 
-        fallbackCompartilhar(textoMsg, linkDireto);
+        fallbackCompartilhar(textoMsg, linkOG);
       });
     }
 

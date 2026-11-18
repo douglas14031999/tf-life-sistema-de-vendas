@@ -62,6 +62,12 @@ function doGet(e) {
     return out(validarCupom({ codigo: cod }));
   }
 
+  // Página OG dinâmica para compartilhamento com preview correto no WhatsApp
+  // GET ?a=og&p=ID_PRODUTO&foto=INDICE_FOTO (opcional)
+  if (e && e.parameter && e.parameter.a === 'og' && e.parameter.p) {
+    return gerarPaginaOG(e.parameter.p, e.parameter.foto);
+  }
+
   var cache = CacheService.getScriptCache();
   var cJson = cache.get('loja_publica');
   if (cJson) {
@@ -77,6 +83,94 @@ function doGet(e) {
   var txt = JSON.stringify(d);
   try { cache.put('loja_publica', txt, 600); } catch (x) {} // Cache de 10 min, limpo automaticamente ao salvar
   return ContentService.createTextOutput(txt).setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * Gera uma página HTML mínima com meta tags OG do produto correto.
+ * O WhatsApp/Telegram/Facebook lê essas tags server-side e exibe a foto certa na pré-visualização.
+ * Usuários reais são redirecionados automaticamente para a loja.
+ */
+function gerarPaginaOG(pid, fotoIdx) {
+  var SITE = 'https://tflife.provacanoa.tech';
+  var DEFAULT_IMG = SITE + '/og-image.jpg';
+
+  var lista = produtos();
+  var p = null;
+  var pidLower = String(pid).toLowerCase();
+  for (var i = 0; i < lista.length; i++) {
+    if (String(lista[i].id).toLowerCase() === pidLower) { p = lista[i]; break; }
+  }
+  if (!p) {
+    // Produto não encontrado: redireciona para a loja
+    return HtmlService.createHtmlOutput(
+      '<html><head><meta http-equiv="refresh" content="0;url=' + SITE + '"></head><body>Redirecionando...</body></html>'
+    ).setTitle('TF Life');
+  }
+
+  var idx = parseInt(fotoIdx, 10) || 0;
+  var imgUrl = p.imagem || DEFAULT_IMG;
+  var nomeFoto = p.nome;
+  var precoFoto = p.preco;
+
+  // Se tem variações, pega a foto e preço da variação correspondente
+  if (p.variacoes && p.variacoes.length) {
+    if (idx >= 0 && idx < p.variacoes.length && p.variacoes[idx].imagem) {
+      imgUrl = p.variacoes[idx].imagem;
+      nomeFoto = p.variacoes[idx].nome || p.variacoes[idx].legenda || p.nome;
+      if (p.variacoes[idx].preco) precoFoto = Number(p.variacoes[idx].preco) || precoFoto;
+    } else if (p.variacoes[0] && p.variacoes[0].imagem) {
+      imgUrl = p.variacoes[0].imagem;
+    }
+  }
+
+  // Converte thumbnail do Drive para versão pública acessível por crawlers
+  // drive.google.com/thumbnail?id=XXX -> lh3.googleusercontent.com/d/XXX
+  var ogImg = imgUrl;
+  var driveMatch = /[?&]id=([a-zA-Z0-9_-]+)/.exec(imgUrl);
+  if (driveMatch) {
+    ogImg = 'https://lh3.googleusercontent.com/d/' + driveMatch[1] + '=w1200';
+  }
+
+  var precoStr = 'R$ ' + Number(precoFoto).toFixed(2).replace('.', ',');
+  var titulo = p.nome + ' · ' + precoStr + ' - TF Life';
+  var desc = (p.descricao_completa || p.descricao || p.nome).substring(0, 200);
+  var corInfo = (nomeFoto && nomeFoto !== p.nome) ? (' · Cor: ' + nomeFoto) : '';
+  if (corInfo) titulo = p.nome + corInfo + ' · ' + precoStr + ' - TF Life';
+
+  // URL de destino real na loja
+  var destino = SITE + '/index.html?p=' + encodeURIComponent(p.id);
+  if (idx > 0) destino += '&foto=' + idx;
+
+  // Escapa caracteres perigosos em HTML
+  function h(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  var html = '<!DOCTYPE html><html lang="pt-BR"><head>'
+    + '<meta charset="utf-8">'
+    + '<meta property="og:type" content="product">'
+    + '<meta property="og:site_name" content="TF Life">'
+    + '<meta property="og:title" content="' + h(titulo) + '">'
+    + '<meta property="og:description" content="' + h(desc) + '">'
+    + '<meta property="og:image" content="' + h(ogImg) + '">'
+    + '<meta property="og:image:secure_url" content="' + h(ogImg) + '">'
+    + '<meta property="og:image:width" content="1200">'
+    + '<meta property="og:image:height" content="1200">'
+    + '<meta property="og:url" content="' + h(destino) + '">'
+    + '<meta property="og:locale" content="pt_BR">'
+    + '<meta name="twitter:card" content="summary_large_image">'
+    + '<meta name="twitter:title" content="' + h(titulo) + '">'
+    + '<meta name="twitter:description" content="' + h(desc) + '">'
+    + '<meta name="twitter:image" content="' + h(ogImg) + '">'
+    + '<title>' + h(titulo) + '</title>'
+    + '<meta http-equiv="refresh" content="0;url=' + h(destino) + '">'
+    + '<script>window.location.replace("' + destino.replace(/"/g, '\\"') + '");</script>'
+    + '</head><body style="font-family:sans-serif;text-align:center;padding:40px">'
+    + '<p>Redirecionando para <strong>TF Life</strong>...</p>'
+    + '<p><a href="' + h(destino) + '">Clique aqui se não for redirecionado</a></p>'
+    + '</body></html>';
+
+  return HtmlService.createHtmlOutput(html)
+    .setTitle(titulo)
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
 /* ---------- Ações ---------- */
