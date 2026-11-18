@@ -722,19 +722,21 @@ function pedido(d) {
   var agora = new Date(), agoraStr = Utilities.formatDate(agora, tz, 'dd/MM/yyyy HH:mm:ss');
   var tel = onlyDigits(d.telefone), nomeC = String(d.nome || '').trim(), endC = String(d.endereco || '').trim();
   var pag = String(d.pagamento || d.forma_pagamento || '').trim(), disp = String(d.dispositivo || d.device_id || '').trim();
-  var idPedido = 'PED-' + Utilities.formatDate(agora, tz, 'yyyyMMdd-HHmmss') + '-' + Math.floor(100 + Math.random() * 900);
+
+  var sPed = garantirAbaPedidos(), lin = linhaLivre(sPed);
+  var numPedido = Math.max(1, Math.max(sPed.getLastRow(), lin - 1));
+  var idPedido = 'PED-' + ('0000' + numPedido).slice(-4);
   var txtItens = resumo.join('; ');
   if (cupomCod && desconto > 0) txtItens += ' [CUPOM: ' + cupomCod + ' (-R$ ' + desconto.toFixed(2) + ')]';
 
   try {
-    var sPed = garantirAbaPedidos(), lin = linhaLivre(sPed);
     try { sPed.getRange(lin, 3).setNumberFormat('@'); } catch (x) {}
     sPed.getRange(lin, 1, 1, 9).setValues([[idPedido, agoraStr, tel, safe(nomeC), safe(endC), safe(pag), safe(txtItens), totalFinal, 'Recebido']]);
   } catch (xp) { Logger.log('Pedido: ' + xp); }
   if (tel) { try { upsertCliente(tel, nomeC, endC, agoraStr, disp); } catch (xc2) { Logger.log('Cliente: ' + xc2); } }
 
   inv('Produtos'); limparCache(); bumpPV();
-  return { ok: 1, id_pedido: idPedido, desconto: desconto, total: totalFinal };
+  return { ok: 1, id_pedido: idPedido, num_pedido: numPedido, desconto: desconto, total: totalFinal };
 }
 
 var ACOES = {

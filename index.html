@@ -4360,6 +4360,75 @@
       draw();
     };
 
+    /* ---------- montagem da mensagem organizada para WhatsApp com número do pedido ---------- */
+    function montarMensagemPedido(dados) {
+      var numPed = dados.numPedido || dados.idPedido || "";
+      var nm = String(dados.nome || "").trim();
+      var tel = String(dados.telefone || "").trim();
+      var itensCart = dados.cart || [];
+      var cupom = dados.cupom;
+      var subtotal = Number(dados.subtotal) || 0;
+      var descVal = Number(dados.desconto) || 0;
+      var totalFinal = Math.max(0, subtotal - descVal);
+      var end = String(dados.endereco || "").trim();
+      var pag = String(dados.pagamento || "Pix").trim();
+
+      // Emoji dinâmico conforme a forma de pagamento
+      var iconePag = "💳";
+      var pagLower = pag.toLowerCase();
+      if (pagLower.indexOf("pix") > -1) {
+        iconePag = "💠";
+      } else if (pagLower.indexOf("dinheiro") > -1) {
+        iconePag = "💵";
+      }
+
+      var msg = "Oba! Novo pedido na TF Life! 🛍️\n\n";
+
+      if (numPed) {
+        var numFormatado = String(numPed).replace(/^PED-(?:\d{8}-)?0*/i, "").replace(/^#/, "");
+        msg += "*Pedido nº " + (numFormatado || numPed) + "*\n\n";
+      }
+
+      msg += "*Itens:*\n";
+      itensCart.forEach(function (it) {
+        var p = typeof prod === "function" ? prod(it.id) : null;
+        var itPreco = (it.preco !== undefined) ? Number(it.preco) : (p ? Number(p.preco) : 0);
+        var itNome = p ? p.nome : (it.nome || it.id);
+        var subItem = it.q * itPreco;
+
+        msg += "➡️ *" + it.q + "x " + itNome + "*\n";
+
+        var det = [];
+        if (it.varNome) det.push(it.varNome);
+        if (it.cor && it.cor !== it.varNome) det.push("Cor: " + it.cor);
+        if (it.tam) det.push("Tam: " + it.tam);
+
+        if (det.length) {
+          msg += "   " + det.join(" | ") + "\n";
+        }
+        msg += "   " + br(subItem) + "\n\n";
+      });
+
+      msg += iconePag + " *" + pag + "*\n\n";
+
+      msg += "📍 *Entrega:*\n" + end + "\n\n";
+
+      if (cupom && descVal > 0) {
+        msg += "Subtotal: " + br(subtotal) + "\n";
+        msg += "🏷️ Cupom *" + (cupom.codigo || cupom) + "*: -" + br(descVal) + "\n";
+        msg += "Total com desconto: *" + br(totalFinal) + "*\n\n";
+      } else {
+        msg += "Total: *" + br(subtotal) + "*\n\n";
+      }
+
+      msg += "👤 *Cliente:* " + nm + "\n";
+      msg += "📱 *Telefone:* " + tel + "\n\n";
+
+      msg += "Obrigado pela preferência, se precisar de algo é só chamar! 😉";
+
+      return msg;
+    }
+
     /* ---------- finalizar: salva pedido, cadastra/atualiza cliente e abre WhatsApp ---------- */
     $("fin").onclick = function () {
       var tel = $("tel").value.trim(), telLimpo = tel.replace(/\D/g, "");
@@ -4371,13 +4440,10 @@
       if (!ad) { msg.textContent = "Preencha o endereço de entrega para finalizar."; $("ad").focus(); return; }
       if (!WA || /^55?0+$/.test(WA)) { msg.textContent = "A loja ainda não configurou o WhatsApp. Tente mais tarde."; return; }
 
-      var s = "Olá, TF Life! Pedido de " + nm + " (" + tel + "):\n", t = 0;
+      var t = 0;
       cart.forEach(function (it) {
         var p = prod(it.id);
         var itPreco = (it.preco !== undefined) ? Number(it.preco) : (p ? Number(p.preco) : 0);
-        var itNome = p ? p.nome : (it.nome || it.id);
-        var v = [it.varNome ? "[" + it.varNome + "]" : "", it.cor && it.cor !== it.varNome ? "Cor: " + it.cor : "", it.tam ? "Tam: " + it.tam : ""].filter(Boolean).join(" ");
-        s += it.q + "x " + itNome + (v ? " (" + v + ")" : "") + " – " + br(it.q * itPreco) + "\n";
         t += it.q * itPreco;
       });
       var descVal = 0;
@@ -4387,18 +4453,28 @@
         } else {
           descVal = Math.min(t, Number(cupomAtivo.valor));
         }
-        var totalComDesc = Math.max(0, Number((t - descVal).toFixed(2)));
-        s += "\nSubtotal: " + br(t);
-        s += "\nCupom " + cupomAtivo.codigo + ": -" + br(descVal);
-        s += "\nTotal com desconto: " + br(totalComDesc);
-      } else {
-        s += "\nTotal: " + br(t);
       }
-      s += "\nEntrega: " + ad + "\nPagamento: " + pg;
 
-      var url = "https://wa.me/" + WA + "?text=" + encodeURIComponent(s);
+      var numProvisorio = Math.floor(10 + Math.random() * 90);
+      var msgInicial = montarMensagemPedido({
+        numPedido: numProvisorio,
+        nome: nm,
+        telefone: tel,
+        cart: cart,
+        cupom: cupomAtivo,
+        subtotal: t,
+        desconto: descVal,
+        endereco: ad,
+        pagamento: pg
+      });
+
+      var urlInicial = "https://wa.me/" + WA + "?text=" + encodeURIComponent(msgInicial);
       var w = window.open("", "_blank");
-      var ir = function () { if (w && !w.closed) w.location = url; else location.href = url; };
+      var ir = function (finalUrl) {
+        var destino = finalUrl || urlInicial;
+        if (w && !w.closed) w.location.href = destino;
+        else location.href = destino;
+      };
       var fim = function () {
         cart = []; draw(); grid(); painel(false);
         salvarClienteLocal({ telefone: telLimpo, nome: nm, endereco: ad });
@@ -4412,7 +4488,7 @@
       };
 
       salvarClienteLocal({ telefone: telLimpo, nome: nm, endereco: ad });
-      if (!API) { ir(); fim(); return; }
+      if (!API) { ir(urlInicial); fim(); return; }
       btn.disabled = true; btn.textContent = "Enviando…";
 
       var payload = {
@@ -4455,7 +4531,22 @@
                 new BroadcastChannel("tflife_sync").postMessage("novo_pedido");
               }
             } catch (e) { }
-            ir(); fim();
+
+            var numReal = r.num_pedido || r.id_pedido || numProvisorio;
+            var msgReal = montarMensagemPedido({
+              numPedido: numReal,
+              nome: nm,
+              telefone: tel,
+              cart: cart,
+              cupom: cupomAtivo,
+              subtotal: t,
+              desconto: descVal,
+              endereco: ad,
+              pagamento: pg
+            });
+            var urlFinal = "https://wa.me/" + WA + "?text=" + encodeURIComponent(msgReal);
+            ir(urlFinal);
+            fim();
           }
           else {
             if (w) w.close();
@@ -4467,8 +4558,8 @@
           }
         })
         .catch(function () {
-          if (w) w.close();
-          msg.textContent = "Falha de conexão. Verifique a internet e tente de novo.";
+          ir(urlInicial);
+          fim();
         })
         .then(function () {
           btn.disabled = false;

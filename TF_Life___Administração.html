@@ -1891,6 +1891,10 @@ footer{padding-bottom:84px}
     function formatarIdPedido(id) {
       if (!id) return "";
       var str = String(id).trim();
+      var mNum = str.match(/^PED-(?:\d{8}-)?0*(\d+)$/i);
+      if (mNum) {
+        return "#" + mNum[1];
+      }
       var m = str.match(/^PED-\d{8}-(.+)$/);
       if (m) {
         return "#PED-" + m[1];
