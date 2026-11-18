@@ -21,7 +21,6 @@ Sistema completo de e-commerce PWA e gestão de pedidos integrado ao Google Shee
 - **Miniaturas Ultraleves**: Miniaturas da tabela solicitam resoluções compactas (`sz=w100`), reduzindo em ~98% o peso das imagens na listagem.
 - **Acompanhamento de Pedidos**: Sincronização em tempo real de pedidos, faturamento e pendências com cálculo direto dos totais gerais.
 - **Gestão Completa**: Produtos, Categorias, Clientes, Cupons e Configurações de WhatsApp e faixas de destaque.
-- **Arquivo de Backup**: Cópia preservada em `admin_backup.html`.
 
 ### 📊 Backend de Alta Performance (`Code.gs`)
 - **Memoização em Memória (`_memo`)**: Evita leituras redundantes de abas dentro da mesma execução.
