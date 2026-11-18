@@ -50,10 +50,11 @@ function limparCache() {
 }
 
 function doGet(e) {
-  // Busca rápida de cliente por telefone via GET (?a=cliente&tel=...)
+  // Busca rápida de cliente por telefone ou por dispositivo via GET (?a=cliente&tel=... ou ?a=cliente&dev=...)
   if (e && e.parameter && (e.parameter.a === 'cliente' || e.parameter.a === 'buscarCliente')) {
     var tel = String(e.parameter.tel || e.parameter.telefone || '').replace(/\D/g, '');
-    return out(buscarCliente({ telefone: tel }));
+    var dev = String(e.parameter.dev || e.parameter.device_id || e.parameter.dispositivo || '').trim();
+    return out(buscarCliente({ telefone: tel, device_id: dev }));
   }
 
   // Validação rápida de cupom via GET (?a=cupom&codigo=DE20)
@@ -330,8 +331,21 @@ function getAbaClientes() {
 function garantirAbaClientes() {
   var s = getAbaClientes();
   if (!s) {
-    s = getOuCriarAba('Clientes', ['telefone', 'nome', 'endereco', 'data_cadastro', 'ultimo_pedido', 'total_pedidos']);
+    s = getOuCriarAba('Clientes', ['telefone', 'nome', 'endereco', 'data_cadastro', 'ultimo_pedido', 'total_pedidos', 'dispositivos']);
     try { s.getRange('A:A').setNumberFormat('@'); } catch (x) {}
+    try { s.getRange('G:G').setNumberFormat('@'); } catch (x) {}
+  } else {
+    try {
+      var lastCol = Math.max(s.getLastColumn(), 1);
+      var headers = s.getRange(1, 1, 1, lastCol).getValues()[0].map(function (x) { return String(x || '').trim().toLowerCase(); });
+      if (headers.indexOf('dispositivos') === -1) {
+        var colDisp = headers.length + 1;
+        s.getRange(1, colDisp).setValue('dispositivos').setFontWeight('bold');
+        try { s.getRange(1, colDisp, s.getMaxRows(), 1).setNumberFormat('@'); } catch (x) {}
+      }
+    } catch (eH) {
+      Logger.log('Erro ao garantir coluna dispositivos: ' + eH);
+    }
   }
   return s;
 }
@@ -402,26 +416,42 @@ function excluirPedido(d) {
 
 function buscarCliente(d) {
   var tel = String(d.telefone || d.tel || '').replace(/\D/g, '');
-  if (tel.length < 8) return { ok: 1, encontrado: false };
+  var dev = String(d.device_id || d.dispositivo || d.dev || '').trim();
+  if (tel.length < 8 && !dev) return { ok: 1, encontrado: false };
   var aba = getAbaClientes();
   if (!aba) return { ok: 1, encontrado: false };
 
   var lista = rd(aba.getName());
-  var achou = lista.filter(function (r) {
-    var rTel = String(r.telefone || '').replace(/\D/g, '');
-    if (!rTel) return false;
-    return rTel === tel ||
-      (rTel.length >= 10 && tel.length >= 10 && (
-        rTel.slice(-10) === tel.slice(-10) ||
-        rTel.slice(-11) === tel.slice(-11)
-      ));
-  })[0];
+  var achou = null;
 
-  if (achou && achou.nome) {
+  // 1. Prioridade: busca por dispositivo cadastrado (se informado)
+  if (dev) {
+    achou = lista.filter(function (r) {
+      var disps = String(r.dispositivos || '').trim();
+      if (!disps) return false;
+      var arr = disps.split(/[,;\s]+/).map(function (s) { return s.trim(); }).filter(Boolean);
+      return arr.indexOf(dev) !== -1;
+    })[0];
+  }
+
+  // 2. Se não encontrou por dispositivo (ou se veio telefone direto), busca por telefone
+  if (!achou && tel.length >= 8) {
+    achou = lista.filter(function (r) {
+      var rTel = String(r.telefone || '').replace(/\D/g, '');
+      if (!rTel) return false;
+      return rTel === tel ||
+        (rTel.length >= 10 && tel.length >= 10 && (
+          rTel.slice(-10) === tel.slice(-10) ||
+          rTel.slice(-11) === tel.slice(-11)
+        ));
+    })[0];
+  }
+
+  if (achou && (achou.nome || achou.telefone)) {
     return {
       ok: 1,
       encontrado: true,
-      telefone: String(achou.telefone),
+      telefone: String(achou.telefone || ''),
       nome: String(achou.nome || ''),
       endereco: String(achou.endereco || '')
     };
@@ -429,10 +459,26 @@ function buscarCliente(d) {
   return { ok: 1, encontrado: false };
 }
 
-function upsertCliente(telefone, nome, endereco, agora) {
+function upsertCliente(telefone, nome, endereco, agora, dispositivo) {
   if (!telefone) return;
   var s = garantirAbaClientes();
   var telLimpo = String(telefone).replace(/\D/g, '');
+  var hRange = s.getRange(1, 1, 1, Math.max(s.getLastColumn(), 1));
+  var headers = hRange.getValues()[0].map(function (x) { return String(x || '').trim().toLowerCase(); });
+
+  var colTel = headers.indexOf('telefone') + 1 || 1;
+  var colNome = headers.indexOf('nome') + 1 || 2;
+  var colEnd = headers.indexOf('endereco') + 1 || 3;
+  var colDataCad = headers.indexOf('data_cadastro') + 1 || 4;
+  var colUltPed = headers.indexOf('ultimo_pedido') + 1 || 5;
+  var colTotPed = headers.indexOf('total_pedidos') + 1 || 6;
+  var colDisp = headers.indexOf('dispositivos') + 1;
+  if (!colDisp) {
+    colDisp = headers.length + 1;
+    s.getRange(1, colDisp).setValue('dispositivos').setFontWeight('bold');
+    try { s.getRange(1, colDisp, s.getMaxRows(), 1).setNumberFormat('@'); } catch (x) {}
+  }
+
   var lista = rd(s.getName());
   var ex = lista.filter(function (r) {
     var rTel = String(r.telefone || '').replace(/\D/g, '');
@@ -443,25 +489,37 @@ function upsertCliente(telefone, nome, endereco, agora) {
       ));
   })[0];
 
+  var devLimpo = String(dispositivo || '').trim();
+
   if (ex) {
     var nLinha = ex._row;
-    if (nome) s.getRange(nLinha, 2).setValue(safe(nome));
-    if (endereco) s.getRange(nLinha, 3).setValue(safe(endereco));
-    s.getRange(nLinha, 5).setValue(agora);
+    if (nome) s.getRange(nLinha, colNome).setValue(safe(nome));
+    if (endereco) s.getRange(nLinha, colEnd).setValue(safe(endereco));
+    s.getRange(nLinha, colUltPed).setValue(agora);
     var qtd = (parseInt(ex.total_pedidos, 10) || 0) + 1;
-    s.getRange(nLinha, 6).setValue(qtd);
+    s.getRange(nLinha, colTotPed).setValue(qtd);
+
+    if (devLimpo) {
+      var dispsAtuais = String(ex.dispositivos || '').trim();
+      var arr = dispsAtuais ? dispsAtuais.split(/[,;\s]+/).map(function (s) { return s.trim(); }).filter(Boolean) : [];
+      if (arr.indexOf(devLimpo) === -1) {
+        arr.push(devLimpo);
+        s.getRange(nLinha, colDisp).setValue(arr.join(', '));
+      }
+    }
   } else {
     var novaLinha = linhaLivre(s);
-    var cTel = s.getRange(novaLinha, 1);
+    var cTel = s.getRange(novaLinha, colTel);
     try { cTel.setNumberFormat('@'); } catch (x) {}
     cTel.setValue(telLimpo);
-    s.getRange(novaLinha, 2, 1, 5).setValues([[
-      safe(nome || ''),
-      safe(endereco || ''),
-      agora,
-      agora,
-      1
-    ]]);
+    s.getRange(novaLinha, colNome).setValue(safe(nome || ''));
+    s.getRange(novaLinha, colEnd).setValue(safe(endereco || ''));
+    s.getRange(novaLinha, colDataCad).setValue(agora);
+    s.getRange(novaLinha, colUltPed).setValue(agora);
+    s.getRange(novaLinha, colTotPed).setValue(1);
+    if (devLimpo) {
+      s.getRange(novaLinha, colDisp).setValue(devLimpo);
+    }
   }
 }
 
@@ -705,6 +763,7 @@ function pedido(d) {
   var nomeCliente = String(d.nome || '').trim();
   var endCliente = String(d.endereco || '').trim();
   var formaPag = String(d.pagamento || d.forma_pagamento || '').trim();
+  var dispCliente = String(d.dispositivo || d.device_id || '').trim();
   var idPedido = 'PED-' + Utilities.formatDate(new Date(), tz, 'yyyyMMdd-HHmmss') + '-' + Math.floor(100 + Math.random() * 900);
 
   var resumoGravado = resumoItens.join('; ');
@@ -735,7 +794,7 @@ function pedido(d) {
   // 2. Grava ou atualiza o cliente na aba Clientes (usuários da loja)
   if (telLimpo) {
     try {
-      upsertCliente(telLimpo, nomeCliente, endCliente, agoraStr);
+      upsertCliente(telLimpo, nomeCliente, endCliente, agoraStr, dispCliente);
     } catch (xCli) {
       Logger.log('Erro ao salvar cliente: ' + xCli);
     }

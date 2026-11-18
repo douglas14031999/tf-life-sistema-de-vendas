@@ -2309,7 +2309,13 @@
 
     /* ---------- painel lateral: 1) detalhe, 2) carrinho ---------- */
     function painel(on) { $("dr").classList.toggle("on", on); $("ov").classList.toggle("on", on) }
-    function vista(n) { $("v1").classList.toggle("on", n == 1); $("v2").classList.toggle("on", n == 2) }
+    function vista(n) {
+      $("v1").classList.toggle("on", n == 1);
+      $("v2").classList.toggle("on", n == 2);
+      if (n == 2 && typeof verificarEPreencherCliente === "function") {
+        verificarEPreencherCliente();
+      }
+    }
     function abrirProduto(id) {
       var p = prod(id); if (!p) return;
       var vars = (p.variacoes && p.variacoes.length) ? p.variacoes : [];
@@ -3130,9 +3136,95 @@
       }, { passive: true });
     })();
 
-    /* ---------- busca e auto-preenchimento do cliente por telefone ---------- */
+    /* ---------- identificação de dispositivo e auto-preenchimento do cliente ---------- */
     var ultimoTelBuscado = "";
     var timerBuscaTel = null;
+    var DEVICE_KEY = "tflife_device_id";
+    var CLIENTE_LOCAL_KEY = "tflife_cliente_info";
+
+    function getDeviceId() {
+      var id = "";
+      try {
+        id = localStorage.getItem(DEVICE_KEY);
+        if (!id) {
+          id = "dev_" + Date.now().toString(36) + "_" + Math.random().toString(36).substring(2, 9);
+          localStorage.setItem(DEVICE_KEY, id);
+        }
+      } catch (e) {
+        id = "dev_" + Date.now().toString(36);
+      }
+      return id;
+    }
+
+    function salvarClienteLocal(dados) {
+      if (!dados) return;
+      try {
+        var telLimpo = String(dados.telefone || "").replace(/\D/g, "");
+        var obj = {
+          telefone: telLimpo,
+          nome: String(dados.nome || "").trim(),
+          endereco: String(dados.endereco || "").trim()
+        };
+        localStorage.setItem(CLIENTE_LOCAL_KEY, JSON.stringify(obj));
+      } catch (e) { }
+    }
+
+    function obterClienteLocal() {
+      try {
+        var raw = localStorage.getItem(CLIENTE_LOCAL_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch (e) { }
+      return null;
+    }
+
+    function aplicarDadosCliente(res, fonte) {
+      if (!res) return;
+      var msgTel = $("tel-msg");
+      var telLimpo = String(res.telefone || "").replace(/\D/g, "");
+
+      if (telLimpo) {
+        var telFmt = formatarTelefone(telLimpo);
+        if (!$("tel").value || $("tel").value !== telFmt) {
+          $("tel").value = telFmt;
+        }
+        ultimoTelBuscado = telLimpo;
+      }
+      if (res.nome && (!$("nm").value || fonte === "servidor")) {
+        $("nm").value = res.nome;
+      }
+      if (res.endereco && (!$("ad").value || fonte === "servidor")) {
+        $("ad").value = res.endereco;
+      }
+      if (msgTel && res.nome) {
+        msgTel.style.color = "var(--g)";
+        msgTel.textContent = "✓ Olá, " + res.nome + "! Dados preenchidos para este dispositivo.";
+        msgTel.style.display = "block";
+      }
+      salvarClienteLocal(res);
+    }
+
+    function buscarClientePorDispositivo() {
+      var dev = getDeviceId();
+      if (!API || !dev) return;
+      var url = API + (API.indexOf("?") > -1 ? "&" : "?") + "a=cliente&dev=" + encodeURIComponent(dev);
+      fetch(url)
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+          if (res && res.ok && res.encontrado) {
+            aplicarDadosCliente(res, "servidor");
+          }
+        })
+        .catch(function () { });
+    }
+
+    function verificarEPreencherCliente() {
+      var local = obterClienteLocal();
+      if (local && (local.telefone || local.nome)) {
+        aplicarDadosCliente(local, "local");
+      }
+      // Sincroniza em segundo plano com o banco de dados da planilha
+      buscarClientePorDispositivo();
+    }
 
     function formatarTelefone(v) {
       var d = String(v || "").replace(/\D/g, "").slice(0, 11);
@@ -3166,6 +3258,11 @@
               msgTel.textContent = "✓ Cliente identificado: " + (res.nome || "");
               msgTel.style.display = "block";
             }
+            salvarClienteLocal({
+              telefone: res.telefone || telLimpo,
+              nome: res.nome || $("nm").value,
+              endereco: res.endereco || $("ad").value
+            });
           } else {
             if (msgTel) {
               msgTel.style.color = "var(--mu)";
@@ -3189,6 +3286,9 @@
           buscarClientePorTelefone(telLimpo);
         }, 350);
       } else {
+        if (!telLimpo) {
+          ultimoTelBuscado = "";
+        }
         if ($("tel-msg")) $("tel-msg").style.display = "none";
       }
     });
@@ -3304,18 +3404,17 @@
       var ir = function () { if (w && !w.closed) w.location = url; else location.href = url; };
       var fim = function () {
         cart = []; draw(); grid(); painel(false);
-        $("nm").value = $("ad").value = $("tel").value = "";
-        ultimoTelBuscado = "";
+        salvarClienteLocal({ telefone: telLimpo, nome: nm, endereco: ad });
         cupomAtivo = null;
         if ($("cp-applied")) $("cp-applied").style.display = "none";
         if ($("btn-show-cp")) $("btn-show-cp").style.display = "inline-flex";
         if ($("cp-in")) $("cp-in").value = "";
         if ($("cp-msg")) $("cp-msg").style.display = "none";
-        if ($("tel-msg")) $("tel-msg").style.display = "none";
         msg.className = "mu";
         msg.textContent = "O pedido é enviado para a loja pelo WhatsApp para confirmação e pagamento.";
       };
 
+      salvarClienteLocal({ telefone: telLimpo, nome: nm, endereco: ad });
       if (!API) { ir(); fim(); return; }
       btn.disabled = true; btn.textContent = "Enviando…";
 
@@ -3327,6 +3426,7 @@
         pagamento: pg,
         cupom: cupomAtivo ? cupomAtivo.codigo : "",
         desconto: descVal,
+        dispositivo: getDeviceId(),
         itens: cart.map(function (i) {
           var p = prod(i.id);
           var itPreco = (i.preco !== undefined) ? Number(i.preco) : (p ? Number(p.preco) : 0);
@@ -3389,6 +3489,7 @@
       renderSkeleton();
     }
     draw();
+    verificarEPreencherCliente();
 
     // 2. Sincroniza dados mais recentes em segundo plano
     carregar();
