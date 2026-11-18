@@ -6,6 +6,7 @@ $RECYCLE.BIN/
 .DS_Store
 *.tmp
 *.temp
+*.zip
 
 # Arquivos de design / identidade visual da marca (não enviar para o GitHub)
 TF-life-marca/
