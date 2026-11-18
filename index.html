@@ -1978,6 +1978,24 @@
     .df .btn{padding:16px;font-size:17px}
     .dpic{border-radius:24px}
 
+    /* ---- múltiplos endereços no carrinho ---- */
+    .end-wrap{display:flex;flex-direction:column;gap:5px;margin-bottom:2px}
+    .end-header{display:flex;align-items:center;justify-content:space-between;padding:0 2px}
+    .end-title{font-size:12px;font-weight:700;color:var(--mu);display:inline-flex;align-items:center;gap:5px}
+    .btn-novo-end{background:none;border:none;color:var(--g);font-size:12px;font-weight:700;cursor:pointer;padding:2px 6px;border-radius:6px;transition:background .15s,color .15s}
+    .btn-novo-end:hover{background:var(--tint);text-decoration:underline}
+    .end-chips{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 3px}
+    .end-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:99px;border:1.5px solid var(--bd);background:var(--card);color:var(--tx);font-size:12px;cursor:pointer;transition:all .18s ease;line-height:1.2;max-width:100%}
+    .end-chip span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:210px}
+    .end-chip:hover{border-color:var(--g);background:var(--tint)}
+    .end-chip.active{border-color:var(--g);background:var(--tint);color:var(--g);font-weight:700;box-shadow:0 2px 6px rgba(30,77,53,.12)}
+    .end-chip .chip-del{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;font-size:12px;color:var(--mu);margin-left:3px;transition:background .15s,color .15s}
+    .end-chip .chip-del:hover{background:rgba(201,42,42,.15);color:#c92a2a}
+    @media(prefers-color-scheme:dark){
+      .btn-novo-end{color:var(--l)}
+      .end-chip.active{background:rgba(157,200,63,.15);color:var(--l);border-color:var(--l)}
+    }
+
     @media(max-width:760px){
       .hero .w{padding-top:44px;padding-bottom:52px}
       .leaf{padding:26px;border-radius:0 70px 0 70px}
@@ -2180,7 +2198,21 @@
           <input id="tel" type="tel" placeholder="Telefone / WhatsApp (com DDD)" maxlength="15" autocomplete="tel">
           <p id="tel-msg" style="font-size:12px;margin:-4px 0 2px 4px;display:none;font-weight:600;"></p>
           <input id="nm" placeholder="Seu nome" autocomplete="name">
-          <input id="ad" placeholder="Endereço de entrega" autocomplete="street-address">
+          <div class="end-wrap" id="end-wrap">
+            <div class="end-header" id="end-header" style="display:none">
+              <span class="end-title">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                Entregar em:
+              </span>
+              <button type="button" class="btn-novo-end" id="btn-novo-end" title="Cadastrar outro endereço de entrega">+ Outro endereço</button>
+            </div>
+            <div class="end-chips" id="end-chips" style="display:none"></div>
+            <div style="position:relative">
+              <input id="ad" placeholder="Endereço de entrega (Rua, nº, bairro)" autocomplete="street-address" style="width:100%">
+              <button type="button" id="btn-clear-ad" title="Limpar campo para digitar outro" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--mu);cursor:pointer;font-size:18px;line-height:1;padding:4px">×</button>
+            </div>
+            <small id="end-hint" style="display:none;font-size:11.5px;color:var(--mu);margin-top:-2px">💡 Você pode selecionar um endereço acima ou alterar diretamente no campo.</small>
+          </div>
           <select id="pg" aria-label="Pagamento">
             <option>Pix</option>
             <option>Cartão de crédito</option>
@@ -2459,7 +2491,13 @@
     }
 
     /* ---------- painel lateral: 1) detalhe, 2) carrinho ---------- */
-    function painel(on) { $("dr").classList.toggle("on", on); $("ov").classList.toggle("on", on) }
+    function painel(on) {
+      $("dr").classList.toggle("on", on);
+      $("ov").classList.toggle("on", on);
+      if (on && typeof verificarEPreencherCliente === "function") {
+        verificarEPreencherCliente();
+      }
+    }
     function vista(n) {
       $("v1").classList.toggle("on", n == 1);
       $("v2").classList.toggle("on", n == 2);
@@ -3307,23 +3345,142 @@
       return id;
     }
 
+    function normalizarListaEnderecos(arrOuStr, endPrincipal) {
+      var lista = [];
+      if (Array.isArray(arrOuStr)) {
+        lista = arrOuStr.map(function (s) { return String(s || "").trim(); }).filter(Boolean);
+      } else if (typeof arrOuStr === "string" && arrOuStr.trim()) {
+        lista = arrOuStr.split(/\s*\|\s*|\s*;\s*|\n+/).map(function (s) { return s.trim(); }).filter(Boolean);
+      }
+      var p = String(endPrincipal || "").trim();
+      if (p) {
+        var jaExiste = lista.some(function (item) { return item.toLowerCase() === p.toLowerCase(); });
+        if (!jaExiste) {
+          lista.unshift(p);
+        } else {
+          lista = [p].concat(lista.filter(function (item) { return item.toLowerCase() !== p.toLowerCase(); }));
+        }
+      }
+      var unicos = [], vistos = {};
+      lista.forEach(function (item) {
+        var k = item.toLowerCase();
+        if (!vistos[k]) {
+          vistos[k] = true;
+          unicos.push(item);
+        }
+      });
+      return unicos.slice(0, 5);
+    }
+
+    function renderizarSelecaoEnderecos(listaEnd, endAtivo) {
+      var header = $("end-header"), container = $("end-chips"), hint = $("end-hint"), inputAd = $("ad"), btnClear = $("btn-clear-ad");
+      if (!header || !container || !inputAd) return;
+
+      var ends = normalizarListaEnderecos(listaEnd, endAtivo);
+      if (!ends.length) {
+        header.style.display = "none";
+        container.style.display = "none";
+        if (hint) hint.style.display = "none";
+        if (btnClear) btnClear.style.display = inputAd.value ? "block" : "none";
+        return;
+      }
+
+      header.style.display = "flex";
+      container.style.display = "flex";
+      if (hint) hint.style.display = "block";
+      if (btnClear) btnClear.style.display = inputAd.value ? "block" : "none";
+
+      var ativoTrim = String(endAtivo !== undefined ? endAtivo : inputAd.value).trim().toLowerCase();
+      container.innerHTML = "";
+
+      ends.forEach(function (end) {
+        var chip = document.createElement("button");
+        chip.type = "button";
+        var isAtivo = Boolean(ativoTrim && end.toLowerCase() === ativoTrim);
+        chip.className = "end-chip" + (isAtivo ? " active" : "");
+        chip.title = "Entregar neste endereço: " + end;
+
+        var span = document.createElement("span");
+        span.textContent = end;
+        chip.appendChild(span);
+
+        var del = document.createElement("span");
+        del.className = "chip-del";
+        del.title = "Remover este endereço da lista";
+        del.innerHTML = "&times;";
+        del.onclick = function (e) {
+          e.stopPropagation();
+          removerEnderecoSalvo(end);
+        };
+        chip.appendChild(del);
+
+        chip.onclick = function () {
+          inputAd.value = end;
+          if (btnClear) btnClear.style.display = "block";
+          var all = container.querySelectorAll(".end-chip");
+          for (var i = 0; i < all.length; i++) all[i].classList.remove("active");
+          chip.classList.add("active");
+          salvarClienteLocal({ endereco: end });
+          inputAd.focus();
+        };
+
+        container.appendChild(chip);
+      });
+    }
+
+    function removerEnderecoSalvo(endParaRemover) {
+      try {
+        var cl = obterClienteLocal() || {};
+        var ends = normalizarListaEnderecos(cl.enderecos || [], cl.endereco);
+        var remLower = String(endParaRemover || "").trim().toLowerCase();
+        var filtrados = ends.filter(function (e) {
+          return e.toLowerCase() !== remLower;
+        });
+        cl.enderecos = filtrados;
+        var inputAd = $("ad");
+        if (inputAd && inputAd.value.trim().toLowerCase() === remLower) {
+          inputAd.value = filtrados[0] || "";
+        }
+        cl.endereco = (inputAd && inputAd.value.trim()) || filtrados[0] || "";
+        localStorage.setItem(CLIENTE_LOCAL_KEY, JSON.stringify(cl));
+        renderizarSelecaoEnderecos(filtrados, cl.endereco);
+      } catch (e) { }
+    }
+
     function salvarClienteLocal(dados) {
       if (!dados) return;
       try {
-        var telLimpo = String(dados.telefone || "").replace(/\D/g, "");
+        var localAntigo = obterClienteLocal() || {};
+        var telLimpo = dados.telefone !== undefined ? String(dados.telefone || "").replace(/\D/g, "") : (localAntigo.telefone || "");
+        var nomeSalvar = dados.nome !== undefined ? String(dados.nome || "").trim() : (localAntigo.nome || "");
+        var endAtivo = dados.endereco !== undefined ? String(dados.endereco || "").trim() : (localAntigo.endereco || "");
+        var baseEnderecos = dados.enderecos || localAntigo.enderecos || [];
+        var ends = normalizarListaEnderecos(baseEnderecos, endAtivo);
+        if (!endAtivo && ends.length) endAtivo = ends[0];
+
         var obj = {
           telefone: telLimpo,
-          nome: String(dados.nome || "").trim(),
-          endereco: String(dados.endereco || "").trim()
+          nome: nomeSalvar,
+          endereco: endAtivo,
+          enderecos: ends
         };
         localStorage.setItem(CLIENTE_LOCAL_KEY, JSON.stringify(obj));
+        renderizarSelecaoEnderecos(ends, endAtivo);
       } catch (e) { }
     }
 
     function obterClienteLocal() {
       try {
         var raw = localStorage.getItem(CLIENTE_LOCAL_KEY);
-        if (raw) return JSON.parse(raw);
+        if (raw) {
+          var obj = JSON.parse(raw);
+          if (obj) {
+            if (!obj.enderecos) {
+              obj.enderecos = obj.endereco ? [obj.endereco] : [];
+            }
+            return obj;
+          }
+        }
       } catch (e) { }
       return null;
     }
@@ -3343,15 +3500,31 @@
       if (res.nome && (!$("nm").value || fonte === "servidor")) {
         $("nm").value = res.nome;
       }
-      if (res.endereco && (!$("ad").value || fonte === "servidor")) {
-        $("ad").value = res.endereco;
+
+      var listaEnd = normalizarListaEnderecos(res.enderecos || res.endereco || [], res.endereco);
+      var endAtual = $("ad").value.trim();
+      var endEscolhido = endAtual || res.endereco || (listaEnd.length ? listaEnd[0] : "");
+
+      if (endEscolhido && (!endAtual || fonte === "servidor")) {
+        $("ad").value = endEscolhido;
       }
+      if ($("btn-clear-ad")) {
+        $("btn-clear-ad").style.display = $("ad").value ? "block" : "none";
+      }
+
       if (msgTel && res.nome) {
         msgTel.style.color = "var(--g)";
         msgTel.textContent = "✓ Olá, " + res.nome + "! Dados preenchidos para este dispositivo.";
         msgTel.style.display = "block";
       }
-      salvarClienteLocal(res);
+
+      renderizarSelecaoEnderecos(listaEnd, $("ad").value);
+      salvarClienteLocal({
+        telefone: telLimpo,
+        nome: res.nome || $("nm").value,
+        endereco: $("ad").value,
+        enderecos: listaEnd
+      });
     }
 
     function buscarClientePorDispositivo() {
@@ -3370,7 +3543,7 @@
 
     function verificarEPreencherCliente() {
       var local = obterClienteLocal();
-      if (local && (local.telefone || local.nome)) {
+      if (local && (local.telefone || local.nome || local.endereco || (local.enderecos && local.enderecos.length))) {
         aplicarDadosCliente(local, "local");
       }
       // Sincroniza em segundo plano com o banco de dados da planilha
@@ -3403,7 +3576,10 @@
         .then(function (res) {
           if (res && res.ok && res.encontrado) {
             if (res.nome) $("nm").value = res.nome;
-            if (res.endereco) $("ad").value = res.endereco;
+            var listaEnd = normalizarListaEnderecos(res.enderecos || res.endereco || [], res.endereco);
+            if (res.endereco && !$("ad").value) $("ad").value = res.endereco;
+            if ($("btn-clear-ad")) $("btn-clear-ad").style.display = $("ad").value ? "block" : "none";
+            renderizarSelecaoEnderecos(listaEnd, $("ad").value);
             if (msgTel) {
               msgTel.style.color = "var(--g)";
               msgTel.textContent = "✓ Cliente identificado: " + (res.nome || "");
@@ -3412,7 +3588,8 @@
             salvarClienteLocal({
               telefone: res.telefone || telLimpo,
               nome: res.nome || $("nm").value,
-              endereco: res.endereco || $("ad").value
+              endereco: $("ad").value || res.endereco,
+              enderecos: listaEnd
             });
           } else {
             if (msgTel) {
@@ -3448,6 +3625,41 @@
       var telLimpo = e.target.value.replace(/\D/g, "");
       if (telLimpo.length >= 10) {
         buscarClientePorTelefone(telLimpo);
+      }
+    });
+
+    /* Controles de múltiplos endereços */
+    var btnNovoEnd = $("btn-novo-end");
+    if (btnNovoEnd) {
+      btnNovoEnd.onclick = function () {
+        var inputAd = $("ad");
+        inputAd.value = "";
+        inputAd.focus();
+        if ($("btn-clear-ad")) $("btn-clear-ad").style.display = "none";
+        var chips = document.querySelectorAll(".end-chip");
+        for (var i = 0; i < chips.length; i++) chips[i].classList.remove("active");
+      };
+    }
+
+    var btnClearAd = $("btn-clear-ad");
+    if (btnClearAd) {
+      btnClearAd.onclick = function () {
+        var inputAd = $("ad");
+        inputAd.value = "";
+        inputAd.focus();
+        btnClearAd.style.display = "none";
+        var chips = document.querySelectorAll(".end-chip");
+        for (var i = 0; i < chips.length; i++) chips[i].classList.remove("active");
+      };
+    }
+
+    $("ad").addEventListener("input", function (e) {
+      var val = e.target.value.trim().toLowerCase();
+      if ($("btn-clear-ad")) $("btn-clear-ad").style.display = e.target.value ? "block" : "none";
+      var chips = document.querySelectorAll(".end-chip");
+      for (var i = 0; i < chips.length; i++) {
+        var txt = chips[i].querySelector("span") ? chips[i].querySelector("span").textContent.trim().toLowerCase() : "";
+        chips[i].classList.toggle("active", Boolean(val && txt === val));
       }
     });
 

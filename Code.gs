@@ -506,8 +506,19 @@ function buscarCliente(d) {
     achou = lista.filter(function (r) { return mesmoTel(onlyDigits(r.telefone), tel); })[0];
   }
   if (achou && (achou.nome || achou.telefone)) {
+    var endRaw = String(achou.endereco || '').trim();
+    var arrEnd = endRaw ? endRaw.split(/\s*\|\s*|\s*;\s*|\n+/).map(function (s) { return s.trim(); }).filter(Boolean) : [];
+    var endPrincipal = arrEnd[0] || endRaw;
+
     if (porDisp || CLIENTE_TEL_COMPLETO) {
-      return { ok: 1, encontrado: true, telefone: String(achou.telefone || ''), nome: String(achou.nome || ''), endereco: String(achou.endereco || '') };
+      return {
+        ok: 1,
+        encontrado: true,
+        telefone: String(achou.telefone || ''),
+        nome: String(achou.nome || ''),
+        endereco: endPrincipal,
+        enderecos: arrEnd
+      };
     }
     return { ok: 1, encontrado: true, nome: String(achou.nome || '').trim().split(/\s+/)[0] };
   }
@@ -527,10 +538,19 @@ function upsertCliente(telefone, nome, endereco, agora, dispositivo) {
   }
   var ncol = Math.max(headers.length, colDisp), dev = String(dispositivo || '').trim();
   var ex = rd(s.getName()).filter(function (r) { return mesmoTel(onlyDigits(r.telefone), telLimpo); })[0];
+  var novoEnd = String(endereco || '').trim();
+
   if (ex) {
     var row = s.getRange(ex._row, 1, 1, ncol).getValues()[0];
     if (nome) row[colNome - 1] = safe(nome);
-    if (endereco) row[colEnd - 1] = safe(endereco);
+    if (novoEnd) {
+      var endAtual = String(row[colEnd - 1] || '').trim();
+      var arrEnd = endAtual ? endAtual.split(/\s*\|\s*|\s*;\s*|\n+/).map(function (s) { return s.trim(); }).filter(Boolean) : [];
+      arrEnd = arrEnd.filter(function (e) { return e.toLowerCase() !== novoEnd.toLowerCase(); });
+      arrEnd.unshift(novoEnd);
+      if (arrEnd.length > 5) arrEnd = arrEnd.slice(0, 5);
+      row[colEnd - 1] = safe(arrEnd.join(' | '));
+    }
     row[colUlt - 1] = agora;
     row[colTot - 1] = (parseInt(ex.total_pedidos, 10) || 0) + 1;
     if (dev) {
@@ -540,7 +560,7 @@ function upsertCliente(telefone, nome, endereco, agora, dispositivo) {
     s.getRange(ex._row, 1, 1, ncol).setValues([row]);
   } else {
     var lin = linhaLivre(s), nv = []; for (var i = 0; i < ncol; i++) nv.push('');
-    nv[colTel - 1] = telLimpo; nv[colNome - 1] = safe(nome || ''); nv[colEnd - 1] = safe(endereco || '');
+    nv[colTel - 1] = telLimpo; nv[colNome - 1] = safe(nome || ''); nv[colEnd - 1] = safe(novoEnd);
     nv[colCad - 1] = agora; nv[colUlt - 1] = agora; nv[colTot - 1] = 1;
     if (dev) nv[colDisp - 1] = dev;
     try { s.getRange(lin, colTel).setNumberFormat('@'); } catch (x) {}
